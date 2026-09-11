@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>volos — tangible code. instant execution.</title>
+<style>
+  :root {
+    --bg: #050507;
+    --bg2: #0a0a0f;
+    --card: rgba(255,255,255,0.04);
+    --card2: rgba(255,255,255,0.07);
+    --border: rgba(255,255,255,0.09);
+    --border2: rgba(255,255,255,0.18);
+    --text: #f5f5f7;
+    --muted: #9a9aa5;
+    --accent: #64d2ff;
+    --purple: #a78bfa;
+    --green: #30d158;
+    --red: #ff453a;
+    --radius: 16px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased; line-height: 1.55;
+  }
+  ::selection { background: rgba(100,210,255,0.3); }
+  a { color: inherit; }
+
+  /* ---------- announcement ---------- */
+  .announce {
+    background: linear-gradient(90deg, #64d2ff, #a78bfa);
+    color: #000; text-align: center; font-size: 0.8rem; font-weight: 600;
+    padding: 0.5rem 1rem; letter-spacing: 0.01em;
+  }
+  .announce b { font-weight: 800; }
+
+  /* ---------- nav ---------- */
+  .nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(5,5,7,0.8); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-inner {
+    max-width: 1100px; margin: 0 auto; padding: 0.85rem 2rem;
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  }
+  .brand { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; color: var(--text); cursor: pointer; background: none; border: none; font-size: 1rem; }
+  .brand img { height: 24px; filter: invert(1); }
+  .brand span { font-size: 1.15rem; font-weight: 700; letter-spacing: -0.02em; }
+  .nav-links { display: flex; gap: 0.15rem; align-items: center; }
+  .nav-links button {
+    background: none; border: none; color: var(--muted); font-size: 0.9rem; font-weight: 500;
+    padding: 0.45rem 0.85rem; border-radius: 8px; cursor: pointer; transition: color .15s, background .15s;
+  }
+  .nav-links button:hover { color: var(--text); }
+  .nav-links button.active { color: var(--text); background: rgba(255,255,255,0.08); }
+  .cart-btn {
+    position: relative; background: rgba(255,255,255,0.08); border: 1px solid var(--border);
+    color: var(--text); border-radius: 10px; padding: 0.45rem 0.8rem; cursor: pointer; font-size: 1rem;
+    margin-left: 0.5rem; transition: background .15s;
+  }
+  .cart-btn:hover { background: rgba(255,255,255,0.14); }
+  .cart-badge {
+    position: absolute; top: -6px; right: -6px; background: var(--accent); color: #000;
+    font-size: 0.68rem; font-weight: 700; min-width: 17px; height: 17px; border-radius: 9px;
+    display: none; align-items: center; justify-content: center; padding: 0 4px;
+  }
+  .cart-badge.show { display: flex; }
+
+  /* ---------- views ---------- */
+  .view { display: none; }
+  .view.active { display: block; animation: fadeIn .3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 0 2rem; }
+  section.block { padding: 4rem 0; }
+  .eyebrow { font-size: 0.75rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.7rem; font-weight: 700; }
+  h2.sec { font-size: 2.2rem; font-weight: 700; letter-spacing: -0.03em; margin-bottom: 0.6rem; line-height: 1.15; }
+  .sec-sub { color: var(--muted); font-size: 1.05rem; max-width: 560px; margin-bottom: 2.2rem; }
+  .center { text-align: center; }
+  .center .sec-sub { margin-left: auto; margin-right: auto; }
+
+  /* ---------- buttons ---------- */
+  .btn {
+    display: inline-block; padding: 0.72rem 1.5rem; border-radius: 10px; font-size: 0.92rem; font-weight: 600;
+    text-decoration: none; cursor: pointer; border: 1px solid var(--border2); color: var(--text);
+    background: rgba(255,255,255,0.07); transition: transform .12s, background .15s, box-shadow .15s;
+  }
+  .btn:hover { transform: translateY(-1px); background: rgba(255,255,255,0.12); }
+  .btn.white { background: #fff; color: #000; border: none; }
+  .btn.white:hover { background: #e8e8ed; }
+  .btn.accent { background: linear-gradient(90deg, #64d2ff, #a78bfa); color: #000; border: none; box-shadow: 0 4px 20px rgba(100,210,255,0.25); }
+  .btn.accent:hover { filter: brightness(1.08); }
+  .btn.ghost { background: transparent; }
+  .btn:disabled { opacity: 0.5; cursor: default; transform: none; }
+  .btn.small { padding: 0.5rem 1.1rem; font-size: 0.84rem; }
+
+  /* ---------- hero ---------- */
+  .hero { position: relative; overflow: hidden; }
+  .hero-bg {
+    position: absolute; inset: 0; pointer-events: none;
+    background:
+      radial-gradient(ellipse 55% 45% at 72% 15%, rgba(100,210,255,0.14), transparent 70%),
+      radial-gradient(ellipse 40% 40% at 15% 55%, rgba(167,139,250,0.10), transparent 70%),
+      radial-gradient(ellipse 30% 30% at 50% 100%, rgba(100,210,255,0.06), transparent 70%);
+  }
+  .hero-grid {
+    position: absolute; inset: 0; pointer-events: none; opacity: 0.5;
+    background-image: linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+    background-size: 44px 44px;
+    mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 30%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 30%, transparent 75%);
+  }
+  .hero-inner { position: relative; display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 3rem; align-items: center; padding: 5rem 0 4.5rem; }
+  .hero h1 { font-size: 3.4rem; font-weight: 800; letter-spacing: -0.04em; line-height: 1.06; margin-bottom: 1.1rem; }
+  .hero h1 .grad { background: linear-gradient(100deg, #fff 25%, #64d2ff 80%, #a78bfa 110%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .hero p { color: var(--muted); font-size: 1.18rem; max-width: 460px; margin-bottom: 1.8rem; }
+  .hero-cta { display: flex; gap: 0.8rem; flex-wrap: wrap; }
+  .hero-stats { display: flex; gap: 2.2rem; margin-top: 2.6rem; flex-wrap: wrap; }
+  .hero-stats div b { display: block; font-size: 1.6rem; font-weight: 800; letter-spacing: -0.02em; }
+  .hero-stats div span { font-size: 0.8rem; color: var(--muted); }
+
+  /* ---------- deck demo ---------- */
+  .deck-box { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 1.7rem; backdrop-filter: blur(10px); }
+  .deck-box h3 { font-size: 1.05rem; font-weight: 600; margin-bottom: 0.25rem; }
+  .deck-box .hint { color: var(--muted); font-size: 0.82rem; margin-bottom: 1rem; }
+  .deck { width: 100%; max-width: 430px; height: auto; display: block; margin: 0 auto; }
+  .deck-clear { margin-top: 0.8rem; font-size: 0.8rem; color: var(--muted); background: none; border: none; cursor: pointer; text-decoration: underline; }
+  .deck-clear:hover { color: var(--text); }
+
+  /* ---------- cards ---------- */
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.1rem; }
+  .grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.1rem; }
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 1.7rem 1.6rem; transition: transform .15s, border-color .15s, background .15s;
+  }
+  .card:hover { transform: translateY(-3px); border-color: var(--border2); background: var(--card2); }
+  .card h3 { font-size: 1.12rem; font-weight: 650; margin-bottom: 0.45rem; }
+  .card p { color: var(--muted); font-size: 0.9rem; }
+  .card .ic { width: 42px; height: 42px; border-radius: 11px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; }
+
+  /* ---------- modules ---------- */
+  .mod-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+  .mod {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 1.3rem 1.2rem; cursor: pointer; text-align: left; color: var(--text);
+    display: flex; flex-direction: column; gap: 0.8rem; transition: transform .12s, border-color .12s, background .12s;
+  }
+  .mod:hover { transform: translateY(-3px); border-color: var(--accent); background: var(--card2); }
+  .mod.snapped { border-color: var(--accent); background: rgba(100,210,255,0.07); }
+  .mod-icon { width: 46px; height: 46px; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+  .mod h4 { font-size: 0.98rem; font-weight: 650; }
+  .mod p { color: var(--muted); font-size: 0.82rem; flex: 1; }
+  .mod .price { font-size: 0.88rem; font-weight: 650; }
+  .mod .price small { color: var(--muted); font-weight: 400; }
+  .mod .actions { display: flex; gap: 0.5rem; }
+  .mod .actions .btn { flex: 1; text-align: center; padding: 0.42rem 0.6rem; font-size: 0.78rem; }
+
+  /* ---------- steps ---------- */
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.1rem; counter-reset: step; }
+  .step { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.8rem 1.6rem; position: relative; }
+  .step::before {
+    counter-increment: step; content: "0" counter(step);
+    position: absolute; top: 1.3rem; right: 1.4rem; font-size: 2.2rem; font-weight: 800;
+    color: rgba(255,255,255,0.07); letter-spacing: -0.03em;
+  }
+  .step h3 { font-size: 1.05rem; font-weight: 650; margin-bottom: 0.4rem; }
+  .step p { color: var(--muted); font-size: 0.9rem; }
+
+  /* ---------- testimonials ---------- */
+  .quote { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.7rem 1.6rem; display: flex; flex-direction: column; gap: 1rem; }
+  .quote .stars { color: #ffd60a; letter-spacing: 2px; font-size: 0.9rem; }
+  .quote p { font-size: 0.95rem; color: #d5d5da; font-style: italic; flex: 1; }
+  .quote .who { display: flex; align-items: center; gap: 0.7rem; }
+  .quote .avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700; color: #000; }
+  .quote .who b { font-size: 0.88rem; display: block; }
+  .quote .who span { font-size: 0.78rem; color: var(--muted); }
+
+  /* ---------- newsletter ---------- */
+  .newsletter { background: linear-gradient(120deg, rgba(100,210,255,0.10), rgba(167,139,250,0.10)); border: 1px solid var(--border2); border-radius: 20px; padding: 2.6rem 2.4rem; text-align: center; }
+  .newsletter h3 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.5rem; }
+  .newsletter p { color: var(--muted); font-size: 0.95rem; margin-bottom: 1.4rem; }
+  .nl-form { display: flex; gap: 0.6rem; max-width: 420px; margin: 0 auto; }
+  .nl-form input {
+    flex: 1; background: rgba(0,0,0,0.4); border: 1px solid var(--border2); border-radius: 10px;
+    color: var(--text); padding: 0.7rem 1rem; font-size: 0.9rem; outline: none;
+  }
+  .nl-form input:focus { border-color: var(--accent); }
+  .nl-ok { color: var(--green); font-size: 0.9rem; font-weight: 600; display: none; }
+
+  /* ---------- code ---------- */
+  .code-wrap { border: 1px solid var(--border); border-radius: 14px; overflow: hidden; background: #0b0b10; }
+  .code-top { display: flex; align-items: center; gap: 0.4rem; padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); background: #101016; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot.r { background: #ff5f57; } .dot.y { background: #febc2e; } .dot.g { background: #28c840; }
+  .code-file { margin-left: 0.8rem; color: var(--muted); font-family: SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.78rem; }
+  .code-pane { padding: 1.2rem 1.3rem; font-family: SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.88rem; line-height: 1.7; color: #e5e5e7; white-space: pre; overflow-x: auto; min-height: 120px; }
+  .code-pane .k { color: #fc5d7c; } .code-pane .s { color: #fce566; } .code-pane .c { color: #5a5a60; }
+
+  /* ---------- shop ---------- */
+  .shop-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.1rem; align-items: stretch; }
+  .shop-card { display: flex; flex-direction: column; justify-content: space-between; min-height: 340px; }
+  .shop-card.featured { border-color: var(--accent); background: linear-gradient(160deg, rgba(100,210,255,0.09), rgba(167,139,250,0.05)); }
+  .pill { font-size: 0.68rem; padding: 0.18rem 0.5rem; border-radius: 4px; letter-spacing: 0.05em; text-transform: uppercase; font-weight: 700; display: inline-block; margin-bottom: 0.8rem; }
+  .pill.hot { background: var(--green); color: #000; }
+  .pill.blue { background: var(--accent); color: #000; }
+  .shop-card h3 { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.4rem; }
+  .shop-card > div > p { color: var(--muted); font-size: 0.88rem; }
+  .feat { list-style: none; margin-top: 1.1rem; }
+  .feat li { font-size: 0.84rem; color: var(--muted); margin-bottom: 0.45rem; display: flex; gap: 0.5rem; }
+  .feat li::before { content: "\2713"; color: var(--text); }
+  .price-row { margin-top: 1.4rem; display: flex; justify-content: space-between; align-items: center; }
+  .price { font-size: 1.8rem; font-weight: 800; letter-spacing: -0.02em; }
+  .strike { font-size: 0.95rem; color: var(--muted); text-decoration: line-through; margin-left: 0.35rem; }
+  .chips { display: flex; gap: 0.5rem; margin-bottom: 1.6rem; flex-wrap: wrap; }
+  .chip {
+    background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--muted);
+    border-radius: 999px; padding: 0.4rem 1rem; font-size: 0.82rem; cursor: pointer; transition: all .15s;
+  }
+  .chip:hover { color: var(--text); }
+  .chip.sel { background: rgba(100,210,255,0.15); border-color: var(--accent); color: var(--text); }
+
+  /* ---------- product ---------- */
+  .crumbs { font-size: 0.82rem; color: var(--muted); margin-bottom: 1.6rem; }
+  .crumbs button { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 0.82rem; }
+  .crumbs button:hover { color: var(--text); }
+  .crumbs .sep { margin: 0 0.5rem; opacity: 0.5; }
+  .crumbs .here { color: var(--text); }
+  .prod-grid { display: grid; grid-template-columns: 1fr 1.1fr; gap: 2.5rem; align-items: start; }
+  .prod-visual {
+    border-radius: 20px; padding: 3rem; display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--border); min-height: 340px;
+  }
+  .prod-visual svg { width: 130px; height: 130px; }
+  .prod h1 { font-size: 2.2rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 0.4rem; }
+  .prod .cat { color: var(--accent); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.12em; font-weight: 700; margin-bottom: 0.8rem; }
+  .prod .desc { color: var(--muted); font-size: 1rem; margin-bottom: 1.4rem; }
+  .prod .price { font-size: 2rem; margin-bottom: 1.2rem; }
+  .prod .buy-row { display: flex; gap: 0.7rem; margin-bottom: 1.8rem; flex-wrap: wrap; }
+  .specs { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
+  .specs td { padding: 0.65rem 0.2rem; border-bottom: 1px solid var(--border); font-size: 0.88rem; }
+  .specs td:first-child { color: var(--muted); width: 40%; }
+  .specs tr:last-child td { border-bottom: none; }
+  .rel-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+
+  /* ---------- about ---------- */
+  .about-hero { text-align: center; padding: 4rem 0 2rem; }
+  .about-hero h1 { font-size: 2.8rem; font-weight: 800; letter-spacing: -0.035em; margin-bottom: 1rem; }
+  .about-hero p { color: var(--muted); font-size: 1.15rem; max-width: 620px; margin: 0 auto; }
+  .timeline { max-width: 640px; margin: 0 auto; position: relative; padding-left: 2rem; }
+  .timeline::before { content: ""; position: absolute; left: 7px; top: 6px; bottom: 6px; width: 2px; background: linear-gradient(var(--accent), var(--purple)); opacity: 0.4; }
+  .tl-item { position: relative; padding: 0 0 2rem 1.2rem; }
+  .tl-item::before { content: ""; position: absolute; left: -2rem; top: 6px; width: 14px; height: 14px; border-radius: 50%; background: var(--bg); border: 2px solid var(--accent); }
+  .tl-item .year { font-size: 0.78rem; color: var(--accent); font-weight: 700; letter-spacing: 0.08em; }
+  .tl-item h3 { font-size: 1.05rem; font-weight: 650; margin: 0.2rem 0 0.3rem; }
+  .tl-item p { color: var(--muted); font-size: 0.9rem; }
+
+  /* ---------- docs ---------- */
+  .doc-step { display: flex; gap: 1.2rem; padding: 1.2rem 0; border-bottom: 1px solid var(--border); }
+  .doc-step:last-child { border-bottom: none; }
+  .doc-step .n { flex-shrink: 0; width: 34px; height: 34px; border-radius: 10px; background: rgba(100,210,255,0.12); border: 1px solid rgba(100,210,255,0.3); color: var(--accent); font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; }
+  .doc-step h4 { font-size: 1rem; font-weight: 650; margin-bottom: 0.25rem; }
+  .doc-step p { color: var(--muted); font-size: 0.88rem; }
+  .api-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+  .api-table th { text-align: left; color: var(--muted); font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; padding: 0.6rem 0.4rem; border-bottom: 1px solid var(--border2); }
+  .api-table td { padding: 0.7rem 0.4rem; border-bottom: 1px solid var(--border); }
+  .api-table td code { font-family: SFMono-Regular, Menlo, Consolas, monospace; color: var(--accent); font-size: 0.82rem; }
+  .api-table tr:last-child td { border-bottom: none; }
+
+  /* ---------- support ---------- */
+  .support-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: start; }
+  .field { margin-bottom: 0.9rem; }
+  .field label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 0.3rem; }
+  .field input, .field select, .field textarea {
+    width: 100%; background: rgba(0,0,0,0.35); border: 1px solid var(--border); border-radius: 9px;
+    color: var(--text); padding: 0.62rem 0.85rem; font-size: 0.9rem; outline: none; transition: border-color .15s;
+    font-family: inherit;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
+  .field input.err, .field textarea.err { border-color: var(--red); }
+  .field .emsg { display: none; color: var(--red); font-size: 0.75rem; margin-top: 0.25rem; }
+  .field .emsg.show { display: block; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; }
+  .info-card { display: flex; gap: 1rem; align-items: flex-start; padding: 1.2rem 1.1rem; }
+  .info-card .ic { flex-shrink: 0; }
+
+  /* ---------- blog ---------- */
+  .blog-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.1rem; }
+  .post-card { cursor: pointer; display: flex; flex-direction: column; gap: 0.8rem; }
+  .post-card .thumb { height: 130px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 2rem; }
+  .post-card .date { font-size: 0.78rem; color: var(--muted); }
+  .post-card h3 { font-size: 1.08rem; font-weight: 650; line-height: 1.3; }
+  .post-card p { color: var(--muted); font-size: 0.86rem; flex: 1; }
+  .post-card .more { color: var(--accent); font-size: 0.84rem; font-weight: 600; }
+  .post-body { max-width: 680px; margin: 0 auto; }
+  .post-body h1 { font-size: 2.2rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 0.5rem; }
+  .post-body .date { color: var(--muted); font-size: 0.85rem; margin-bottom: 1.8rem; }
+  .post-body p { color: #c9c9d0; font-size: 1rem; margin-bottom: 1.1rem; }
+  .post-body h3 { font-size: 1.25rem; font-weight: 700; margin: 1.6rem 0 0.6rem; }
+
+  /* ---------- order ---------- */
+  .order-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 1.5rem; align-items: start; }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.6rem; }
+  .panel h3 { font-size: 1.05rem; font-weight: 650; margin-bottom: 1rem; }
+  .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 0.7rem 0; border-bottom: 1px solid var(--border); }
+  .cart-item:last-child { border-bottom: none; }
+  .cart-item .name { font-size: 0.9rem; font-weight: 500; }
+  .cart-item .sub { font-size: 0.78rem; color: var(--muted); }
+  .qty { display: flex; align-items: center; gap: 0.5rem; }
+  .qty button { width: 24px; height: 24px; border-radius: 6px; border: 1px solid var(--border); background: rgba(255,255,255,0.06); color: var(--text); cursor: pointer; font-size: 0.85rem; line-height: 1; }
+  .qty button:hover { background: rgba(255,255,255,0.14); }
+  .qty span { min-width: 20px; text-align: center; font-size: 0.9rem; }
+  .cart-total { display: flex; justify-content: space-between; padding-top: 1rem; font-weight: 700; font-size: 1.05rem; }
+  .cart-empty { color: var(--muted); font-size: 0.9rem; padding: 1.5rem 0; text-align: center; }
+  .pay-opts { display: flex; gap: 0.6rem; margin-bottom: 1rem; }
+  .pay-opt {
+    flex: 1; text-align: center; padding: 0.6rem; border: 1px solid var(--border); border-radius: 9px;
+    cursor: pointer; font-size: 0.85rem; color: var(--muted); background: rgba(0,0,0,0.35); transition: border-color .15s, color .15s;
+  }
+  .pay-opt.sel { border-color: var(--accent); color: var(--text); }
+  .order-ok { text-align: center; padding: 2.5rem 1rem; }
+  .order-ok .big { font-size: 2.6rem; margin-bottom: 0.8rem; }
+  .order-ok h3 { font-size: 1.4rem; margin-bottom: 0.5rem; }
+  .order-ok p { color: var(--muted); font-size: 0.92rem; margin-bottom: 0.3rem; }
+  .order-ok .orderno { color: var(--accent); font-family: SFMono-Regular, Menlo, Consolas, monospace; font-size: 1rem; }
+
+  /* ---------- faq ---------- */
+  .faq { background: var(--card); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 0.7rem; overflow: hidden; }
+  .faq button {
+    width: 100%; background: none; border: none; color: var(--text); text-align: left; cursor: pointer;
+    padding: 1rem 1.2rem; font-size: 0.95rem; font-weight: 500; display: flex; justify-content: space-between; align-items: center;
+  }
+  .faq .chev { color: var(--muted); transition: transform .2s; font-size: 0.8rem; }
+  .faq.open .chev { transform: rotate(180deg); }
+  .faq .ans { display: none; padding: 0 1.2rem 1.1rem; color: var(--muted); font-size: 0.88rem; }
+  .faq.open .ans { display: block; }
+
+  /* ---------- legal ---------- */
+  .legal { max-width: 720px; }
+  .legal h2 { font-size: 1.9rem; font-weight: 750; letter-spacing: -0.02em; margin-bottom: 0.4rem; }
+  .legal .updated { color: var(--muted); font-size: 0.82rem; margin-bottom: 2rem; }
+  .legal h3 { font-size: 1.05rem; font-weight: 650; margin: 1.6rem 0 0.5rem; }
+  .legal p, .legal li { color: var(--muted); font-size: 0.92rem; margin-bottom: 0.5rem; }
+  .legal ul { padding-left: 1.3rem; }
+
+  /* ---------- 404 ---------- */
+  .nf { text-align: center; padding: 6rem 0; }
+  .nf .code { font-size: 6rem; font-weight: 800; letter-spacing: -0.05em; background: linear-gradient(100deg, #64d2ff, #a78bfa); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .nf h2 { font-size: 1.6rem; margin: 0.5rem 0 0.6rem; }
+  .nf p { color: var(--muted); margin-bottom: 1.6rem; }
+
+  /* ---------- footer ---------- */
+  footer { border-top: 1px solid var(--border); background: var(--bg2); margin-top: 3rem; }
+  .foot-grid { max-width: 1100px; margin: 0 auto; padding: 3.5rem 2rem 2.5rem; display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: 2rem; }
+  .foot-brand img { height: 22px; filter: invert(1); margin-bottom: 0.8rem; }
+  .foot-brand p { color: var(--muted); font-size: 0.85rem; max-width: 240px; }
+  .foot-col h4 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 0.9rem; }
+  .foot-col button, .foot-col a { display: block; background: none; border: none; color: #c9c9d0; font-size: 0.88rem; padding: 0.3rem 0; cursor: pointer; text-align: left; text-decoration: none; }
+  .foot-col button:hover, .foot-col a:hover { color: var(--text); }
+  .foot-bottom { max-width: 1100px; margin: 0 auto; padding: 1.4rem 2rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
+  .foot-bottom p { color: var(--muted); font-size: 0.8rem; }
+  .socials { display: flex; gap: 0.6rem; }
+  .socials button { width: 34px; height: 34px; border-radius: 9px; border: 1px solid var(--border); background: rgba(255,255,255,0.05); color: var(--muted); cursor: pointer; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; }
+  .socials button:hover { color: var(--text); border-color: var(--border2); }
+
+  /* ---------- toast ---------- */
+  .toast {
+    position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: #1c1c22; border: 1px solid var(--border2); color: var(--text); border-radius: 10px;
+    padding: 0.7rem 1.2rem; font-size: 0.88rem; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; z-index: 200;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 960px) {
+    .hero-inner, .prod-grid, .order-grid, .support-grid { grid-template-columns: 1fr; }
+    .hero h1 { font-size: 2.5rem; }
+    .grid3, .grid4, .mod-grid, .shop-grid, .blog-grid, .steps, .rel-grid { grid-template-columns: 1fr 1fr; }
+    .foot-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 620px) {
+    .grid3, .grid4, .mod-grid, .shop-grid, .blog-grid, .steps, .rel-grid { grid-template-columns: 1fr; }
+    .hero h1 { font-size: 2.1rem; }
+    .hero-stats { gap: 1.4rem; }
+    .nav-links button { padding: 0.4rem 0.55rem; font-size: 0.82rem; }
+    .wrap { padding: 0 1.2rem; }
+    .row2 { grid-template-columns: 1fr; }
+    .foot-grid { grid-template-columns: 1fr; }
+    .nl-form { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<div class="announce">🚚 <b>free worldwide shipping</b> on all kits — order by friday</div>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <button class="brand" data-nav="home"><img src="volos.png" alt="volos logo"><span>volos</span></button>
+    <div class="nav-links">
+      <button data-nav="home" class="active">home</button>
+      <button data-nav="shop">shop</button>
+      <button data-nav="about">about</button>
+      <button data-nav="docs">docs</button>
+      <button data-nav="blog">blog</button>
+      <button data-nav="support">support</button>
+      <button class="cart-btn" data-nav="order" title="cart">🛒<span class="cart-badge" id="cartBadge">0</span></button>
+    </div>
+  </div>
+</nav>
+
+<main>
+
+  <!-- ============ HOME ============ -->
+  <section class="view active" id="view-home">
+    <div class="hero">
+      <div class="hero-bg"></div>
+      <div class="hero-grid"></div>
+      <div class="wrap hero-inner">
+        <div>
+          <div class="eyebrow">hardware that speaks python</div>
+          <h1>tangible code.<br><span class="grad">instant execution.</span></h1>
+          <p>Snap physical modules into the volos deck. Write Python instantly — no drivers, no setup, no waiting.</p>
+          <div class="hero-cta">
+            <button class="btn accent" data-nav="shop">order a kit</button>
+            <button class="btn ghost" data-nav="docs">read the docs</button>
+          </div>
+          <div class="hero-stats">
+            <div><b>12</b><span>modules</span></div>
+            <div><b>8k+</b><span>builders</span></div>
+            <div><b>40</b><span>countries</span></div>
+            <div><b>0</b><span>drivers</span></div>
+          </div>
+        </div>
+        <div class="deck-box">
+          <h3>try it — snap modules in</h3>
+          <p class="hint">click a module below to snap it into the deck</p>
+          <svg class="deck" id="deckSvg" viewBox="0 0 460 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="baseGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#26262b"/><stop offset="1" stop-color="#141416"/>
+              </linearGradient>
+              <linearGradient id="slotGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#0c0c0e"/><stop offset="1" stop-color="#1a1a1d"/>
+              </linearGradient>
+              <radialGradient id="glowC" cx="0.5" cy="0.5" r="0.5">
+                <stop offset="0" stop-color="#64d2ff" stop-opacity="0.3"/><stop offset="1" stop-color="#64d2ff" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+            <ellipse cx="230" cy="140" rx="150" ry="55" fill="url(#glowC)"/>
+            <rect x="40" y="110" width="380" height="140" rx="24" fill="url(#baseGrad)" stroke="#3a3a3e" stroke-width="1.5"/>
+            <text x="230" y="232" text-anchor="middle" fill="#5a5a60" font-family="monospace" font-size="11" letter-spacing="3">VOLOS · BASE DECK</text>
+            <g id="slot0"><circle cx="120" cy="180" r="34" fill="url(#slotGrad)" stroke="#3a3a3e" stroke-width="1.5"/><circle cx="120" cy="180" r="26" stroke="#64d2ff" stroke-opacity="0.35" stroke-width="1.5" stroke-dasharray="3 4"/></g>
+            <g id="slot1"><circle cx="230" cy="180" r="34" fill="url(#slotGrad)" stroke="#3a3a3e" stroke-width="1.5"/><circle cx="230" cy="180" r="26" stroke="#64d2ff" stroke-opacity="0.35" stroke-width="1.5" stroke-dasharray="3 4"/></g>
+            <g id="slot2"><circle cx="340" cy="180" r="34" fill="url(#slotGrad)" stroke="#3a3a3e" stroke-width="1.5"/><circle cx="340" cy="180" r="26" stroke="#64d2ff" stroke-opacity="0.35" stroke-width="1.5" stroke-dasharray="3 4"/></g>
+          </svg>
+          <div style="text-align:center"><button class="deck-clear" id="deckClear">clear deck</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="wrap">
+      <section class="block">
+        <div class="eyebrow">why volos</div>
+        <h2 class="sec">hardware that disappears into your code</h2>
+        <p class="sec-sub">No breadboards, no wiring, no driver hell. Modules snap in and register themselves.</p>
+        <div class="grid3">
+          <div class="card"><div class="ic" style="background:rgba(100,210,255,0.12)">🧲</div><h3>magnetic bus</h3><p>Snap modules into the base unit with zero wiring. Power, data and identity negotiate in milliseconds.</p></div>
+          <div class="card"><div class="ic" style="background:rgba(167,139,250,0.12)">🐍</div><h3>native python</h3><p>Modules register as native objects the second they snap in. No flashing, no serial ports, no config files.</p></div>
+          <div class="card"><div class="ic" style="background:rgba(48,209,88,0.12)">⚡</div><h3>zero delay</h3><p>Execution runs locally at the chip level. Reads and writes happen in microseconds, not milliseconds.</p></div>
+        </div>
+      </section>
+
+      <section class="block">
+        <div class="eyebrow">the ecosystem</div>
+        <h2 class="sec">every module is a python object</h2>
+        <p class="sec-sub">click a module to snap it into the deck above and see its code</p>
+<div class="mod-grid" id="modGrid"></div>
+        <div class="code-wrap" style="margin-top:1.5rem">
+          <div class="code-top"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="code-file" id="codeFile">base.py</span></div>
+          <div class="code-pane" id="codePane"></div>
+        </div>
+      </section>
+
+      <section class="block">
+        <div class="eyebrow">how it works</div>
+        <h2 class="sec">from box to running in 60 seconds</h2>
+        <div class="steps">
+          <div class="step"><h3>snap</h3><p>Push a module into any slot on the deck. The magnetic bus locks it in and negotiates power instantly.</p></div>
+          <div class="step"><h3>code</h3><p>Open your editor. The module is already in your namespace as a native Python object.</p></div>
+          <div class="step"><h3>run</h3><p>Execute. Real hardware responds in microseconds — no compile step, no flashing, no waiting.</p></div>
+        </div>
+      </section>
+
+      <section class="block">
+        <div class="eyebrow">loved by builders</div>
+        <h2 class="sec">what people say</h2>
+        <div class="grid3">
+          <div class="quote"><div class="stars">★★★★★</div><p>"Set up in under a minute. My students were building working projects before the bell rang."</p><div class="who"><div class="avatar" style="background:#64d2ff">M</div><div><b>Maya R.</b><span>high school teacher</span></div></div></div>
+          <div class="quote"><div class="stars">★★★★★</div><p>"My kids build something new every weekend. No soldering, no frustration — just ideas."</p><div class="who"><div class="avatar" style="background:#a78bfa">D</div><div><b>Dan K.</b><span>parent of two makers</span></div></div></div>
+          <div class="quote"><div class="stars">★★★★★</div><p>"Replaced my entire breadboard drawer. The hot-swap alone is worth it."</p><div class="who"><div class="avatar" style="background:#30d158">S</div><div><b>Sam T.</b><span>hardware tinkerer</span></div></div></div>
+        </div>
+      </section>
+
+      <section class="block">
+        <div class="newsletter">
+          <h3>get the volos letter</h3>
+          <p>new modules, firmware updates and project ideas — once a month, no spam.</p>
+          <form class="nl-form" id="nlForm">
+            <input type="email" id="nlEmail" placeholder="you@example.com" required>
+            <button class="btn accent" type="submit">subscribe</button>
+          </form>
+          <div class="nl-ok" id="nlOk">✓ you're in — welcome to the letter</div>
+        </div>
+      </section>
+
+      <section class="block">
+        <div class="eyebrow">faq</div>
+        <h2 class="sec">questions</h2>
+        <div id="faqList">
+          <div class="faq"><button>what comes in the box?<span class="chev">▾</span></button><div class="ans">Every order includes the volos base deck, a braided USB-C cable, and your selected physical modules.</div></div>
+          <div class="faq"><button>do i need to install drivers?<span class="chev">▾</span></button><div class="ans">No. volos uses native USB-C HID protocols. Plug it in and Python reads it immediately — on Windows, macOS and Linux.</div></div>
+          <div class="faq"><button>is there a monthly subscription?<span class="chev">▾</span></button><div class="ans">Never. You own the hardware outright with a one-time purchase. The Python library is open source.</div></div>
+          <div class="faq"><button>can i mix modules freely?<span class="chev">▾</span></button><div class="ans">Yes — every slot accepts every module. The magnetic bus auto-negotiates power and data, so hot-swapping mid-script just works.</div></div>
+        </div>
+      </section>
+    </div>
+  </section>
+
+  <!-- ============ SHOP ============ -->
+  <section class="view" id="view-shop">
+    <div class="wrap">
+      <div class="eyebrow">shop</div>
+      <h2 class="sec">hardware bundles</h2>
+      <p class="sec-sub">Physical base decks and magnetic modules, shipped to your door. One-time purchase.</p>
+      <div class="shop-grid" id="bundleGrid"></div>
+
+      <section class="block" style="padding-bottom:0">
+        <div class="eyebrow">modules</div>
+        <h2 class="sec">individual modules</h2>
+        <p class="sec-sub">mix and match — every module fits every slot</p>
+        <div class="chips" id="shopChips">
+          <button class="chip sel" data-cat="all">all</button>
+          <button class="chip" data-cat="display">display</button>
+          <button class="chip" data-cat="input">input</button>
+          <button class="chip" data-cat="sensor">sensor</button>
+          <button class="chip" data-cat="audio">audio</button>
+        </div>
+        <div class="mod-grid" id="shopModGrid"></div>
+      </section>
+    </div>
+  </section>
+
+  <!-- ============ PRODUCT (dynamic) ============ -->
+  <section class="view" id="view-product">
+    <div class="wrap" id="productRoot"></div>
+  </section>
+
+  <!-- ============ ABOUT ============ -->
+  <section class="view" id="view-about">
+    <div class="wrap">
+      <div class="about-hero">
+        <div class="eyebrow">about volos</div>
+        <h1>hardware should feel<br>like software</h1>
+        <p>volos started with a simple frustration: physical computing was stuck in the 90s. Breadboards, jumper wires, driver installs. We built the deck to make hardware as instant as a print statement.</p>
+      </div>
+
+      <section class="block">
+        <div class="eyebrow">our story</div>
+        <h2 class="sec">the timeline</h2>
+        <div class="timeline">
+          <div class="tl-item"><div class="year">2024</div><h3>the garage prototype</h3><p>Three engineers, one soldering iron, and a magnetic connector that refused to stay put. The first deck worked — barely.</p></div>
+          <div class="tl-item"><div class="year">2025</div><h3>first 100 decks shipped</h3><p>A small crowdfunding run sold out in 48 hours. Every backer got a handwritten note and a free extra module.</p></div>
+          <div class="tl-item"><div class="year">2026</div><h3>8,000 builders and counting</h3><p>volos is in classrooms, maker spaces and home workshops across 40 countries. The library is fully open source.</p></div>
+        </div>
+      </section>
+
+      <section class="block">
+        <div class="eyebrow">what we believe</div>
+        <h2 class="sec">our values</h2>
+        <div class="grid3">
+          <div class="card"><h3>instant by default</h3><p>Every design decision starts with "how fast can someone go from idea to running?" If it takes setup, it's wrong.</p></div>
+          <div class="card"><h3>open everything</h3><p>Our Python library, firmware and hardware reference designs are open source. You own your tools.</p></div>
+          <div class="card"><h3>built to last</h3><p>No planned obsolescence. Modules are repairable, firmware is updatable, and the deck works with every module we've ever made.</p></div>
+        </div>
+      </section>
+    </div>
+  </section>
+
+  <!-- ============ DOCS ============ -->
+  <section class="view" id="view-docs">
+    <div class="wrap">
+      <div class="eyebrow">docs</div>
+      <h2 class="sec">getting started</h2>
+      <p class="sec-sub">from unboxing to your first blink in four steps.</p>
+
+      <div class="panel" style="margin-bottom:2rem">
+        <div class="doc-step"><div class="n">1</div><div><h4>plug in the deck</h4><p>Connect the volos base deck to any USB-C port. The status LED glows solid blue when ready.</p></div></div>
+        <div class="doc-step"><div class="n">2</div><div><h4>install the library</h4><p>Run <code style="color:var(--accent);font-family:monospace">pip install volos</code> — that's the entire setup. No drivers, no SDK, no path variables.</p></div></div>
+        <div class="doc-step"><div class="n">3</div><div><h4>snap in a module</h4><p>Push any module into a slot. It registers itself in your namespace the moment it clicks.</p></div></div>
+        <div class="doc-step"><div class="n">4</div><div><h4>run your first script</h4><p>Copy the example below and hit run. Real hardware, real output, zero delay.</p></div></div>
+      </div>
+
+      <div class="code-wrap" style="margin-bottom:2.5rem">
+        <div class="code-top"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="code-file">hello.py</span></div>
+        <div class="code-pane"><span class="k">import</span> volos
+
+v = volos.connect()
+v.display.write(<span class="s">"hello, world"</span>)</div>
+      </div>
+
+      <div class="eyebrow">api reference</div>
+      <h2 class="sec">the volos api</h2>
+      <p class="sec-sub">every module exposes the same simple pattern: connect, read, write.</p>
+      <div class="panel">
+        <table class="api-table">
+          <tr><th>object</th><th>description</th></tr>
+          <tr><td><code>v.display.write(text)</code></td><td>render text on the oled panel</td></tr>
+          <tr><td><code>v.display.draw(shape)</code></td><td>draw lines, rects and circles</td></tr>
+          <tr><td><code>v.keypad.pressed()</code></td><td>returns the pressed key, or None</td></tr>
+          <tr><td><code>v.sensor.temp()</code></td><td>temperature in °C, ±0.2° precision</td></tr>
+          <tr><td><code>v.sensor.humidity()</code></td><td>relative humidity percentage</td></tr>
+          <tr><td><code>v.slider.value()</code></td><td>fader position, 0.0 to 1.0</td></tr>
+          <tr><td><code>v.button.pressed()</code></td><td>True while the button is held</td></tr>
+          <tr><td><code>v.buzzer.tone(freq, dur)</code></td><td>play a tone for a duration</td></tr>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SUPPORT ============ -->
+  <section class="view" id="view-support">
+    <div class="wrap">
+      <div class="eyebrow">support</div>
+      <h2 class="sec">we're here to help</h2>
+      <p class="sec-sub">questions about your order, your deck, or your code — we answer within 24 hours.</p>
+      <div class="support-grid">
+        <div class="panel">
+          <h3>send us a message</h3>
+          <form id="contactForm" novalidate>
+            <div class="field"><label>your name</label><input id="cName" type="text" placeholder="Ada Lovelace"><div class="emsg">please enter your name</div></div>
+            <div class="field"><label>email</label><input id="cEmail" type="email" placeholder="you@example.com"><div class="emsg">please enter a valid email</div></div>
+            <div class="field"><label>topic</label>
+              <select id="cTopic"><option>order question</option><option>hardware help</option><option>software / python</option><option>returns &amp; warranty</option><option>something else</option></select>
+            </div>
+            <div class="field"><label>message</label><textarea id="cMsg" rows="5" placeholder="tell us what's up…"></textarea><div class="emsg">please write a message</div></div>
+            <button class="btn accent" type="submit" style="width:100%">send message</button>
+          </form>
+        </div>
+        <div>
+          <div class="card info-card"><div class="ic" style="background:rgba(100,210,255,0.12)">📦</div><div><h3>shipping</h3><p>Free worldwide on all kits. Orders ship within 2 business days, tracking included.</p></div></div>
+          <div class="card info-card" style="margin-top:1rem"><div class="ic" style="background:rgba(167,139,250,0.12)">🔁</div><div><h3>returns &amp; warranty</h3><p>30-day returns on unopened kits. 12-month warranty on all hardware against defects.</p></div></div>
+          <div class="card info-card" style="margin-top:1rem"><div class="ic" style="background:rgba(48,209,88,0.12)">💬</div><div><h3>community</h3><p>Join 8,000+ builders in the volos discord. Project ideas, help, and show-and-tell.</p></div></div>
+          <div class="card info-card" style="margin-top:1rem"><div class="ic" style="background:rgba(255,209,102,0.12)">✉️</div><div><h3>email</h3><p>support@volos.dev — we reply within 24 hours, usually much faster.</p></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ BLOG ============ -->
+  <section class="view" id="view-blog">
+    <div class="wrap">
+      <div class="eyebrow">blog</div>
+      <h2 class="sec">news &amp; stories</h2>
+      <p class="sec-sub">product updates, deep dives, and what the community is building.</p>
+      <div class="blog-grid" id="blogGrid"></div>
+    </div>
+  </section>
+
+  <!-- ============ POST (dynamic) ============ -->
+  <section class="view" id="view-post">
+    <div class="wrap post-body" id="postRoot"></div>
+  </section>
+
+  <!-- ============ ORDER ============ -->
+  <section class="view" id="view-order">
+    <div class="wrap">
+      <div class="eyebrow">order</div>
+      <h2 class="sec">checkout</h2>
+      <div class="order-grid" id="orderGrid">
+        <div class="panel">
+          <h3>your cart</h3>
+          <div id="cartList"></div>
+          <div class="cart-total"><span>total</span><span id="cartTotal">$0</span></div>
+        </div>
+        <div class="panel">
+          <h3>shipping &amp; payment</h3>
+          <form id="orderForm" novalidate>
+            <div class="field"><label>full name</label><input id="fName" type="text" placeholder="Ada Lovelace"><div class="emsg">please enter your name</div></div>
+            <div class="field"><label>email</label><input id="fEmail" type="email" placeholder="you@example.com"><div class="emsg">please enter a valid email</div></div>
+            <div class="field"><label>address</label><input id="fAddr" type="text" placeholder="123 Main Street"><div class="emsg">please enter your address</div></div>
+            <div class="row2">
+              <div class="field"><label>city</label><input id="fCity" type="text" placeholder="City"><div class="emsg">required</div></div>
+              <div class="field"><label>zip</label><input id="fZip" type="text" placeholder="00000"><div class="emsg">required</div></div>
+            </div>
+            <div class="field"><label>country</label>
+              <select id="fCountry"><option value="">select…</option><option>United States</option><option>Canada</option><option>United Kingdom</option><option>Germany</option><option>France</option><option>Japan</option><option>Australia</option><option>Other</option></select>
+              <div class="emsg">required</div>
+            </div>
+            <div class="field"><label>payment</label>
+              <div class="pay-opts">
+                <div class="pay-opt sel" data-pay="card">💳 card</div>
+                <div class="pay-opt" data-pay="paypal">🅿️ paypal</div>
+              </div>
+            </div>
+            <div id="cardFields">
+              <div class="field"><label>card number</label><input id="fCard" type="text" placeholder="4242 4242 4242 4242" maxlength="19"><div class="emsg">enter a card number</div></div>
+              <div class="row2">
+                <div class="field"><label>expiry</label><input id="fExp" type="text" placeholder="MM/YY" maxlength="5"><div class="emsg">MM/YY</div></div>
+                <div class="field"><label>cvc</label><input id="fCvc" type="text" placeholder="123" maxlength="3"><div class="emsg">required</div></div>
+              </div>
+            </div>
+            <button class="btn accent" id="placeOrder" type="submit" style="width:100%;margin-top:0.5rem">place order</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PRIVACY ============ -->
+  <section class="view" id="view-privacy">
+    <div class="wrap legal">
+      <h2>privacy policy</h2>
+      <p class="updated">last updated: september 10, 2026</p>
+      <p>volos ("we", "us") builds physical hardware modules and the software that runs them. This policy explains what we collect when you use our site and products, and how we use it.</p>
+      <h3>information we collect</h3>
+      <ul>
+        <li><b>order information</b> — name, email, shipping address and payment details when you place an order. Payment details are processed by our payment provider and never stored on our servers.</li>
+        <li><b>device information</b> — when you connect a volos deck, the firmware reports module types, firmware versions and diagnostic counters. This data stays on your device unless you opt in to telemetry.</li>
+        <li><b>usage data</b> — anonymous page views and clicks on this website, used to improve the site.</li>
+      </ul>
+      <h3>how we use information</h3>
+      <ul>
+        <li>to fulfill and ship your orders</li>
+        <li>to provide firmware updates and support</li>
+        <li>to improve our hardware and software</li>
+        <li>to send order updates (never marketing, unless you opt in)</li>
+      </ul>
+      <h3>cookies</h3>
+      <p>We use a single local-storage cookie to remember your cart. No tracking cookies, no ad networks, no third-party analytics.</p>
+      <h3>sharing</h3>
+      <p>We never sell your data. We share only what's required to fulfill orders (shipping carriers, payment processors) and only to the extent necessary.</p>
+      <h3>your rights</h3>
+      <p>You can request a copy, correction or deletion of your personal data at any time by emailing <b>privacy@volos.dev</b>. We respond within 30 days.</p>
+      <h3>contact</h3>
+      <p>questions about this policy? email <b>privacy@volos.dev</b>.</p>
+    </div>
+  </section>
+
+  <!-- ============ TERMS ============ -->
+  <section class="view" id="view-terms">
+    <div class="wrap legal">
+      <h2>terms of service</h2>
+      <p class="updated">last updated: september 10, 2026</p>
+      <p>By purchasing or using volos hardware and software, you agree to these terms.</p>
+      <h3>hardware</h3>
+      <p>volos hardware is covered by a 12-month warranty against manufacturing defects. It does not cover damage from misuse, modification, or liquid exposure.</p>
+      <h3>software</h3>
+      <p>The volos Python library is open source under the MIT license. You may use, modify and redistribute it freely.</p>
+      <h3>returns</h3>
+      <p>Unopened kits may be returned within 30 days of delivery for a full refund. Opened kits may be returned within 14 days if modules are undamaged.</p>
+      <h3>liability</h3>
+      <p>volos is provided "as is". To the maximum extent permitted by law, we are not liable for indirect or consequential damages arising from use of our products.</p>
+      <h3>changes</h3>
+      <p>We may update these terms from time to time. Continued use of the products after changes constitutes acceptance.</p>
+      <h3>contact</h3>
+      <p>questions? email <b>support@volos.dev</b>.</p>
+    </div>
+  </section>
+
+  <!-- ============ 404 ============ -->
+  <section class="view" id="view-notfound">
+    <div class="wrap nf">
+      <div class="code">404</div>
+      <h2>module not found</h2>
+      <p>that page snapped out of the deck. let's get you back.</p>
+      <button class="btn accent" data-nav="home">back to home</button>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="foot-grid">
+    <div class="foot-brand">
+      <img src="volos.png" alt="volos logo">
+      <p>tangible code. instant execution. physical hardware modules that speak python.</p>
+    </div>
+    <div class="foot-col">
+      <h4>products</h4>
+      <button data-nav="shop">bundles</button>
+      <button data-nav="shop">modules</button>
+      <button data-nav="shop">base deck</button>
+    </div>
+    <div class="foot-col">
+      <h4>company</h4>
+      <button data-nav="about">about</button>
+      <button data-nav="blog">blog</button>
+      <button data-nav="support">contact</button>
+    </div>
+    <div class="foot-col">
+      <h4>resources</h4>
+      <button data-nav="docs">docs</button>
+      <button data-nav="support">support</button>
+      <button data-nav="privacy">privacy policy</button>
+      <button data-nav="terms">terms</button>
+    </div>
+  </div>
+  <div class="foot-bottom">
+    <p>© 2026 volos hardware. all rights reserved.</p>
+    <div class="socials">
+      <button title="github">⌥</button>
+      <button title="discord">◈</button>
+      <button title="youtube">▶</button>
+      <button title="x">𝕏</button>
+    </div>
+  </div>
+</footer>
+
+<div class="toast" id="toast"></div>
+<script>
+"use strict";
+
+/* ================= data ================= */
+const MODULES = [
+  { id: 'display', name: 'oled display', price: 8, cat: 'display', color: '#64d2ff', bg: 'rgba(100,210,255,0.12)',
+    icon: '<rect x="3" y="5" width="18" height="13" rx="2" stroke="#64d2ff" stroke-width="2"/><path d="M8 21h8M12 18v3" stroke="#64d2ff" stroke-width="2"/>',
+    code: '<span class="k">import</span> volos\n\nv = volos.connect()\nv.display.write(<span class="s">"hello"</span>)',
+    desc: '128×64 pixel screen. text, shapes, graphs.',
+    long: 'A crisp 128×64 OLED panel for text, graphs and pixel art. The display module registers as v.display and renders anything you throw at it — from a single line of text to live sensor charts.',
+    specs: [['resolution', '128 × 64 px'], ['interface', 'magnetic bus (I²C)'], ['refresh', '60 fps'], ['power', 'bus-powered, 40 mA'], ['size', '56 × 56 × 14 mm']] },
+  { id: 'keypad', name: 'keypad module', price: 6, cat: 'input', color: '#ffd166', bg: 'rgba(255,209,102,0.12)',
+    icon: '<rect x="4" y="4" width="16" height="16" rx="3" stroke="#ffd166" stroke-width="2"/><circle cx="9" cy="9" r="1.6" fill="#ffd166"/><circle cx="15" cy="9" r="1.6" fill="#ffd166"/><circle cx="9" cy="15" r="1.6" fill="#ffd166"/><circle cx="15" cy="15" r="1.6" fill="#ffd166"/>',
+    code: '<span class="k">import</span> volos\n\nv = volos.connect()\n<span class="k">if</span> v.keypad.pressed():\n    <span class="k">print</span>(<span class="s">"click"</span>)',
+    desc: '4×4 tactile key matrix, LED backlight.',
+    long: 'A 4×4 tactile key matrix with per-key LED backlight. Perfect for menus, games and control panels. Each key reports press, hold and release events.',
+    specs: [['keys', '16 tactile'], ['backlight', 'per-key RGB LED'], ['interface', 'magnetic bus (I²C)'], ['power', 'bus-powered, 25 mA'], ['size', '56 × 56 × 14 mm']] },
+  { id: 'sensor', name: 'temp sensor', price: 5, cat: 'sensor', color: '#9b5de5', bg: 'rgba(155,93,229,0.14)',
+    icon: '<circle cx="12" cy="17" r="4" stroke="#9b5de5" stroke-width="2"/><path d="M12 13V5M12 5l-2 2M12 5l2 2" stroke="#9b5de5" stroke-width="2" stroke-linecap="round"/>',
+    code: '<span class="k">import</span> volos\n\nv = volos.connect()\n<span class="k">print</span>(v.sensor.temp())',
+    desc: '±0.2°C precision with humidity channel.',
+    long: 'A laboratory-grade temperature and humidity sensor with ±0.2°C precision. Reads update 10 times per second and are calibrated at the factory.',
+    specs: [['temperature', '±0.2 °C'], ['humidity', '±2 % RH'], ['sample rate', '10 Hz'], ['interface', 'magnetic bus (I²C)'], ['size', '56 × 56 × 14 mm']] },
+  { id: 'slider', name: 'slider module', price: 7, cat: 'input', color: '#00f5d4', bg: 'rgba(0,245,212,0.12)',
+    icon: '<path d="M4 12h16" stroke="#00f5d4" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="12" r="4" fill="#00f5d4"/>',
+    code: '<span class="k">import</span> volos\n\nv = volos.connect()\n<span class="k">print</span>(v.slider.value())',
+    desc: '60mm linear fader, 12-bit resolution.',
+    long: 'A smooth 60mm linear fader with 12-bit resolution and touch sensing. Ideal for mixers, synthesizers and any continuous control.',
+    specs: [['travel', '60 mm'], ['resolution', '12-bit (4096 steps)'], ['touch', 'capacitive sense'], ['interface', 'magnetic bus (I²C)'], ['size', '56 × 56 × 14 mm']] },
+  { id: 'button', name: 'button module', price: 4, cat: 'input', color: '#ff4d6d', bg: 'rgba(255,77,109,0.12)',
+    icon: '<circle cx="12" cy="12" r="8" stroke="#ff4d6d" stroke-width="2"/><circle cx="12" cy="12" r="3.5" fill="#ff4d6d"/>',
+    code: '<span class="k">import</span> volos\n\nv = volos.connect()\n<span class="k">if</span> v.button.pressed():\n    <span class="k">print</span>(<span class="s">"pressed"</span>)',
+    desc: 'Illuminated arcade button, press/hold/release.',
+    long: 'A satisfying illuminated arcade button with press, hold and release events. The LED ring is individually addressable.',
+    specs: [['switch', 'arcade-grade, 10M cycles'], ['led', 'addressable ring'], ['events', 'press / hold / release'], ['interface', 'magnetic bus (I²C)'], ['size', '56 × 56 × 14 mm']] },
+  { id: 'buzzer', name: 'buzzer module', price: 4, cat: 'audio', color: '#30d158', bg: 'rgba(48,209,88,0.12)',
+    icon: '<path d="M12 3v6M8 6l4 3 4-3" stroke="#30d158" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 12a7 7 0 0 0 14 0" stroke="#30d158" stroke-width="2" stroke-linecap="round"/>',
+    code: '<span class="k">import</span> volos\n\nv = volos.connect()\nv.buzzer.tone(<span class="s">"C4"</span>, <span class="s">"0.5s"</span>)',
+    desc: 'Piezo speaker with tone and melody control.',
+    long: 'A piezo speaker with tone, melody and volume control. Play notes by name ("C4"), frequency (440), or full melodies.',
+    specs: [['driver', 'piezo, 95 dB'], ['range', '20 Hz – 20 kHz'], ['melodies', 'note-name API'], ['interface', 'magnetic bus (I²C)'], ['size', '56 × 56 × 14 mm']] },
+  { id: 'ring', name: 'rgb ring', price: 6, cat: 'display', color: '#ff9f1c', bg: 'rgba(255,159,28,0.12)',
+    icon: '<circle cx="12" cy="12" r="8" stroke="#ff9f1c" stroke-width="2"/><circle cx="12" cy="7" r="2" fill="#ff9f1c"/><circle cx="17" cy="14" r="2" fill="#ff9f1c"/><circle cx="7" cy="14" r="2" fill="#ff9f1c"/>',
+    code: '<span class="k">import</span> volos\n\nv = volos.connect()\nv.ring.color(<span class="s">"#ff9f1c"</span>)',
+    desc: '24-LED addressable ring for status & effects.',
+    long: 'A 24-LED addressable ring for status indicators, countdowns and ambient effects. Each LED is individually controllable.',
+    specs: [['leds', '24 addressable'], ['color', '16.7M (RGB)'], ['effects', 'built-in pulse/rainbow'], ['interface', 'magnetic bus (I²C)'], ['size', '56 × 56 × 14 mm']] },
+  { id: 'mic', name: 'mic module', price: 7, cat: 'audio', color: '#f15bb5', bg: 'rgba(241,91,181,0.12)',
+    icon: '<rect x="9" y="3" width="6" height="12" rx="3" stroke="#f15bb5" stroke-width="2"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3" stroke="#f15bb5" stroke-width="2" stroke-linecap="round"/>',
+    code: '<span class="k">import</span> volos\n\nv = volos.connect()\n<span class="k">print</span>(v.mic.level())',
+    desc: 'Microphone with live level & peak detection.',
+    long: 'A MEMS microphone with live level metering and peak detection. Great for clap-to-toggle projects and sound-reactive builds.',
+    specs: [['sensor', 'MEMS, -26 dBFS'], ['sample', '16 kHz'], ['output', 'level + peak'], ['interface', 'magnetic bus (I²C)'], ['size', '56 × 56 × 14 mm']] }
+];
+
+const BUNDLES = [
+  { id: 'starter', name: 'starter kit', price: 20, tag: 'starter', desc: 'base deck + 3 modules of your choice',
+    feat: ['1× physical base deck', '3× physical modules', 'braided USB-C cable', 'free worldwide shipping'] },
+  { id: 'popular', name: 'base + 5 modules', price: 30, old: 40, tag: 'most popular', hot: true, desc: 'the complete everyday setup',
+    feat: ['1× physical base deck', '5× physical modules', 'braided USB-C cable', 'aluminum storage case', 'free worldwide shipping'] },
+  { id: 'collector', name: 'base + all modules', price: 45, tag: 'collector', desc: 'the entire physical ecosystem',
+    feat: ['1× physical base deck', 'all physical modules', 'braided USB-C cable', 'aluminum storage case', 'priority support pass'] }
+];
+
+const POSTS = [
+  { id: 'hotswap', title: 'volos 2.0: hot-swap is here', date: 'august 14, 2026', emoji: '⚡',
+    excerpt: 'Snap modules in and out while your script is running. The bus re-negotiates in 12 milliseconds.',
+    body: ['Today we shipped the biggest firmware update since launch: true hot-swapping. Modules can now be removed and inserted while your Python script is running, with zero restarts.', 'The magnetic bus re-negotiates power and identity in 12 milliseconds — fast enough that your code never notices. New modules appear in your namespace instantly, and removed ones are cleaned up automatically.', '<b>what changed:</b> the deck firmware now runs a lightweight negotiation protocol on every snap event. The Python library listens for those events and updates the module registry live.', 'Hot-swap is available now for all existing decks via a free firmware update. Just run <code style="color:var(--accent);font-family:monospace">volos update</code>.'] },
+  { id: 'bus', title: 'the magnetic bus, explained', date: 'july 2, 2026', emoji: '🧲',
+    excerpt: 'How 12 pins, 4 magnets and 12 milliseconds add up to zero-setup hardware.',
+    body: ['The volos bus is the quiet magic behind everything. Twelve pins, four magnets, and a negotiation protocol that runs in milliseconds.', 'When a module snaps in, the deck detects the magnetic latch, powers the module, and reads its identity chip. The chip declares what the module is, what it needs, and what it can do.', 'That identity chip is why there are no drivers. The deck already knows how to talk to every module we make — and the Python library exposes them as native objects.', 'The whole protocol is open source, so you can build your own modules. We ship the reference design with every collector kit.'] },
+  { id: 'classroom', title: 'volos in the classroom', date: 'may 19, 2026', emoji: '🎓',
+    excerpt: 'How three teachers turned a box of modules into a semester of projects.',
+    body: ['When we shipped the first classroom kits, we expected the usual: blinking LEDs and beeping buzzers. What we got was a semester of real projects.', 'Students built a temperature logger for the school greenhouse, a reaction-time game for the science fair, and a doorbell that plays the school anthem.', 'The teachers told us the magic was the zero-setup moment. "The first class, every single student had something running in five minutes. That never happens with hardware."', 'We now offer a classroom program with discounted kits and a free curriculum. Email classroom@volos.dev to learn more.'] }
+];
+
+const BASE_CODE = '<span class="k">import</span> volos\n\nv = volos.connect()\nv.read()';
+
+/* ================= cart ================= */
+let cart = [];
+try { cart = JSON.parse(localStorage.getItem('volos_cart') || '[]'); } catch (e) { cart = []; }
+
+function saveCart() { localStorage.setItem('volos_cart', JSON.stringify(cart)); }
+function cartCount() { return cart.reduce((n, i) => n + i.qty, 0); }
+function cartTotal() { return cart.reduce((n, i) => n + i.qty * i.price, 0); }
+
+function addToCart(item) {
+  const found = cart.find(i => i.id === item.id);
+  if (found) found.qty++;
+  else cart.push({ id: item.id, name: item.name, price: item.price, qty: 1 });
+  saveCart(); updateCartUI(); toast(item.name + ' added to cart');
+}
+function changeQty(id, d) {
+  const it = cart.find(i => i.id === id);
+  if (!it) return;
+  it.qty += d;
+  if (it.qty <= 0) cart = cart.filter(i => i.id !== id);
+  saveCart(); updateCartUI();
+}
+function updateCartUI() {
+  const badge = document.getElementById('cartBadge');
+  const n = cartCount();
+  badge.textContent = n;
+  badge.classList.toggle('show', n > 0);
+  renderCart();
+}
+
+/* ================= router ================= */
+const VIEWS = ['home', 'shop', 'product', 'about', 'docs', 'support', 'blog', 'post', 'order', 'privacy', 'terms', 'notfound'];
+const NAV_MAP = { home: 'home', shop: 'shop', about: 'about', docs: 'docs', blog: 'blog', support: 'support', order: 'order', product: 'shop', post: 'blog', privacy: '', terms: '' };
+
+function parseHash() {
+  return location.hash.replace(/^#\/?/, '').split('/').filter(Boolean);
+}
+function route() {
+  const parts = parseHash();
+  const name = parts[0] || 'home';
+  let view = VIEWS.includes(name) ? name : 'notfound';
+  if (view === 'product') renderProduct(parts[1]);
+  if (view === 'post') renderPost(parts[1]);
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + view).classList.add('active');
+  document.querySelectorAll('.nav-links button[data-nav]').forEach(b => {
+    b.classList.toggle('active', NAV_MAP[view] === b.dataset.nav);
+  });
+  window.scrollTo({ top: 0 });
+}
+function go(name, arg) {
+  location.hash = '#/' + name + (arg ? '/' + arg : '');
+}
+document.querySelectorAll('[data-nav]').forEach(el => el.addEventListener('click', () => go(el.dataset.nav)));
+window.addEventListener('hashchange', route);
+
+/* ================= deck demo ================= */
+const SLOT_X = [120, 230, 340];
+const SLOT_Y = 180;
+const snapped = [];
+
+function renderDeck() {
+  const svg = document.getElementById('deckSvg');
+  svg.querySelectorAll('.snap-mod').forEach(g => g.remove());
+  snapped.forEach((id, i) => {
+    const m = MODULES.find(x => x.id === id);
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.setAttribute('class', 'snap-mod');
+    g.innerHTML = '<rect x="' + (SLOT_X[i] - 28) + '" y="' + (SLOT_Y - 28) + '" width="56" height="56" rx="14" fill="#1c1c1f" stroke="#3a3a3e" stroke-width="1.5"/>' +
+      '<g transform="translate(' + (SLOT_X[i] - 16) + ',' + (SLOT_Y - 16) + ')"><svg width="32" height="32" viewBox="0 0 24 24" fill="none">' + m.icon + '</svg></g>';
+    svg.appendChild(g);
+  });
+}
+function snapModule(m) {
+  if (snapped.includes(m.id)) { showCode(m); return; }
+  if (snapped.length >= 3) snapped.shift();
+  snapped.push(m.id);
+  renderDeck();
+  showCode(m);
+  document.querySelectorAll('#modGrid .mod').forEach(el => el.classList.toggle('snapped', snapped.includes(el.dataset.id)));
+  toast(m.name + ' snapped in');
+}
+document.getElementById('deckClear').addEventListener('click', () => {
+  snapped.length = 0;
+  renderDeck();
+  document.querySelectorAll('#modGrid .mod').forEach(el => el.classList.remove('snapped'));
+  showCode(null);
+});
+
+/* ================= code ================= */
+function showCode(m) {
+  const pane = document.getElementById('codePane');
+  const file = document.getElementById('codeFile');
+  if (!pane) return;
+  if (!m) { pane.innerHTML = BASE_CODE; if (file) file.textContent = 'base.py'; return; }
+  pane.innerHTML = m.code;
+  if (file) file.textContent = m.id + '.py';
+}
+
+/* ================= module cards ================= */
+function modCard(m, gridId) {
+  const div = document.createElement('div');
+  div.className = 'mod';
+  div.dataset.id = m.id;
+  div.innerHTML = '<div class="mod-icon" style="background:' + m.bg + '"><svg width="24" height="24" viewBox="0 0 24 24" fill="none">' + m.icon + '</svg></div>' +
+    '<div><h4>' + m.name + '</h4><p>' + m.desc + '</p></div>' +
+    '<div class="price">$' + m.price + '</div>' +
+    (gridId === 'shopModGrid' ? '<div class="actions"><button class="btn small" data-act="view">view</button><button class="btn small accent" data-act="add">add</button></div>' : '');
+  if (gridId === 'modGrid') {
+    div.addEventListener('click', () => snapModule(m));
+  } else {
+    div.querySelector('[data-act="view"]').addEventListener('click', e => { e.stopPropagation(); go('product', m.id); });
+    div.querySelector('[data-act="add"]').addEventListener('click', e => { e.stopPropagation(); addToCart(m); });
+  }
+  return div;
+}
+MODULES.forEach(m => document.getElementById('modGrid').appendChild(modCard(m, 'modGrid')));
+MODULES.forEach(m => document.getElementById('shopModGrid').appendChild(modCard(m, 'shopModGrid')));
+
+/* shop category filter */
+document.getElementById('shopChips').addEventListener('click', e => {
+  const chip = e.target.closest('.chip');
+  if (!chip) return;
+  document.querySelectorAll('#shopChips .chip').forEach(c => c.classList.remove('sel'));
+  chip.classList.add('sel');
+  const cat = chip.dataset.cat;
+  document.querySelectorAll('#shopModGrid .mod').forEach(el => {
+    const m = MODULES.find(x => x.id === el.dataset.id);
+    el.style.display = (cat === 'all' || m.cat === cat) ? '' : 'none';
+  });
+});
+
+/* ================= bundles ================= */
+BUNDLES.forEach(b => {
+  const card = document.createElement('div');
+  card.className = 'card shop-card' + (b.hot ? ' featured' : '');
+  card.innerHTML =
+    '<div><span class="pill ' + (b.hot ? 'hot' : 'blue') + '">' + b.tag + '</span>' +
+    '<h3>' + b.name + '</h3><p>' + b.desc + '</p>' +
+    '<ul class="feat">' + b.feat.map(f => '<li>' + f + '</li>').join('') + '</ul></div>' +
+    '<div class="price-row"><span class="price">$' + b.price + (b.old ? '<span class="strike">$' + b.old + '</span>' : '') + '</span>' +
+    '<button class="btn small ' + (b.hot ? 'white' : '') + '" data-bundle="' + b.id + '">add to cart</button></div>';
+  card.querySelector('[data-bundle]').addEventListener('click', () => addToCart({ id: b.id, name: b.name, price: b.price }));
+  document.getElementById('bundleGrid').appendChild(card);
+});
+
+/* ================= product page ================= */
+function renderProduct(id) {
+  const m = MODULES.find(x => x.id === id);
+  const root = document.getElementById('productRoot');
+  if (!m) { go('notfound'); return; }
+  const rel = MODULES.filter(x => x.id !== m.id).slice(0, 3);
+  root.innerHTML =
+    '<div class="crumbs"><button data-nav="shop">shop</button><span class="sep">/</span><span class="here">' + m.name + '</span></div>' +
+    '<div class="prod-grid">' +
+      '<div class="prod-visual" style="background:linear-gradient(160deg,' + m.bg + ', rgba(0,0,0,0.2))">' +
+        '<svg width="130" height="130" viewBox="0 0 24 24" fill="none">' + m.icon + '</svg></div>' +
+      '<div class="prod">' +
+        '<div class="cat">' + m.cat + ' module</div>' +
+        '<h1>' + m.name + '</h1>' +
+        '<p class="desc">' + m.long + '</p>' +
+        '<div class="price">$' + m.price + '</div>' +
+        '<div class="buy-row">' +
+          '<button class="btn accent" id="prodAdd">add to cart</button>' +
+          '<button class="btn ghost" data-nav="shop">back to shop</button>' +
+        '</div>' +
+        '<h3 style="font-size:1rem;margin-bottom:0.4rem">specifications</h3>' +
+        '<table class="specs">' + m.specs.map(s => '<tr><td>' + s[0] + '</td><td>' + s[1] + '</td></tr>').join('') + '</table>' +
+      '</div>' +
+    '</div>' +
+    '<section class="block"><div class="eyebrow">related</div><h2 class="sec">pairs well with</h2>' +
+    '<div class="rel-grid">' + rel.map(r =>
+      '<div class="card" style="cursor:pointer" data-rel="' + r.id + '"><div class="ic" style="background:' + r.bg + '"><svg width="22" height="22" viewBox="0 0 24 24" fill="none">' + r.icon + '</svg></div><h3>' + r.name + '</h3><p>' + r.desc + '</p><div style="margin-top:0.8rem;color:var(--accent);font-size:0.85rem;font-weight:600">$' + r.price + ' →</div></div>'
+    ).join('') + '</div></section>';
+  document.getElementById('prodAdd').addEventListener('click', () => addToCart(m));
+  root.querySelectorAll('[data-rel]').forEach(el => el.addEventListener('click', () => go('product', el.dataset.rel)));
+}
+
+/* ================= blog ================= */
+POSTS.forEach(p => {
+  const card = document.createElement('div');
+  card.className = 'card post-card';
+  card.innerHTML = '<div class="thumb" style="background:linear-gradient(140deg, rgba(100,210,255,0.15), rgba(167,139,250,0.15))">' + p.emoji + '</div>' +
+    '<div class="date">' + p.date + '</div><h3>' + p.title + '</h3><p>' + p.excerpt + '</p><span class="more">read post →</span>';
+  card.addEventListener('click', () => go('post', p.id));
+  document.getElementById('blogGrid').appendChild(card);
+});
+function renderPost(id) {
+  const p = POSTS.find(x => x.id === id);
+  const root = document.getElementById('postRoot');
+  if (!p) { go('notfound'); return; }
+  root.innerHTML =
+    '<div class="crumbs"><button data-nav="blog">blog</button><span class="sep">/</span><span class="here">' + p.title + '</span></div>' +
+    '<h1>' + p.title + '</h1><div class="date">' + p.date + '</div>' +
+    p.body.map(par => par.startsWith('<b>') ? '<h3>' + par.replace(/<\/?b>/g, '') + '</h3>' : '<p>' + par + '</p>').join('') +
+    '<div style="margin-top:2rem"><button class="btn ghost" data-nav="blog">← all posts</button></div>';
+}
+
+/* ================= cart render ================= */
+function renderCart() {
+  const list = document.getElementById('cartList');
+  const total = document.getElementById('cartTotal');
+  if (!cart.length) {
+    list.innerHTML = '<div class="cart-empty">your cart is empty — add something from the shop</div>';
+    total.textContent = '$0';
+    return;
+  }
+  list.innerHTML = '';
+  cart.forEach(it => {
+    const row = document.createElement('div');
+    row.className = 'cart-item';
+    row.innerHTML = '<div><div class="name">' + it.name + '</div><div class="sub">$' + it.price + ' each</div></div>' +
+      '<div class="qty"><button data-q="-1" data-id="' + it.id + '">−</button><span>' + it.qty + '</span><button data-q="1" data-id="' + it.id + '">+</button></div>';
+    row.querySelectorAll('button').forEach(b => b.addEventListener('click', () => changeQty(b.dataset.id, parseInt(b.dataset.q))));
+    list.appendChild(row);
+  });
+  total.textContent = '$' + cartTotal();
+}
+
+/* ================= order form ================= */
+let payMethod = 'card';
+document.querySelectorAll('.pay-opt').forEach(o => o.addEventListener('click', () => {
+  document.querySelectorAll('.pay-opt').forEach(x => x.classList.remove('sel'));
+  o.classList.add('sel');
+  payMethod = o.dataset.pay;
+  document.getElementById('cardFields').style.display = payMethod === 'card' ? 'block' : 'none';
+}));
+
+function setErr(input, on) {
+  input.classList.toggle('err', on);
+  const em = input.parentElement.querySelector('.emsg');
+  if (em) em.classList.toggle('show', on);
+}
+function validEmail(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+
+document.getElementById('orderForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const name = document.getElementById('fName'), email = document.getElementById('fEmail'),
+        addr = document.getElementById('fAddr'), city = document.getElementById('fCity'),
+        zip = document.getElementById('fZip'), country = document.getElementById('fCountry'),
+        card = document.getElementById('fCard'), exp = document.getElementById('fExp'), cvc = document.getElementById('fCvc');
+  let ok = true;
+  setErr(name, !name.value.trim()); ok = ok && !!name.value.trim();
+  setErr(email, !validEmail(email.value.trim())); ok = ok && validEmail(email.value.trim());
+  setErr(addr, !addr.value.trim()); ok = ok && !!addr.value.trim();
+  setErr(city, !city.value.trim()); ok = ok && !!city.value.trim();
+  setErr(zip, !zip.value.trim()); ok = ok && !!zip.value.trim();
+  setErr(country, !country.value); ok = ok && !!country.value;
+  if (payMethod === 'card') {
+    setErr(card, card.value.replace(/\s/g, '').length < 12); ok = ok && card.value.replace(/\s/g, '').length >= 12;
+    setErr(exp, !/^\d{2}\/\d{2}$/.test(exp.value.trim())); ok = ok && /^\d{2}\/\d{2}$/.test(exp.value.trim());
+    setErr(cvc, cvc.value.trim().length < 3); ok = ok && cvc.value.trim().length >= 3;
+  }
+  if (!ok) { toast('please fix the highlighted fields'); return; }
+  if (!cart.length) { toast('your cart is empty'); return; }
+
+  const btn = document.getElementById('placeOrder');
+  btn.disabled = true; btn.textContent = 'processing…';
+  setTimeout(() => {
+    const orderNo = 'VOL-' + Math.random().toString(36).slice(2, 8).toUpperCase();
+    cart = []; saveCart(); updateCartUI();
+    const grid = document.getElementById('orderGrid');
+    grid.innerHTML = '<div class="panel order-ok" style="grid-column:1/-1">' +
+      '<div class="big">✅</div><h3>order confirmed</h3>' +
+      '<p>thanks, ' + name.value.trim().split(' ')[0] + '! your kit is on its way.</p>' +
+      '<p class="orderno">' + orderNo + '</p>' +
+      '<p style="margin-top:0.8rem">a confirmation email was sent to ' + email.value.trim() + '</p>' +
+      '<button class="btn white" style="margin-top:1.2rem" data-nav="home">back to home</button></div>';
+    grid.querySelector('[data-nav]').addEventListener('click', () => go('home'));
+    toast('order placed — ' + orderNo);
+  }, 1400);
+});
+
+document.getElementById('fCard').addEventListener('input', e => {
+  e.target.value = e.target.value.replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim();
+});
+document.getElementById('fExp').addEventListener('input', e => {
+  let v = e.target.value.replace(/\D/g, '').slice(0, 4);
+  if (v.length > 2) v = v.slice(0, 2) + '/' + v.slice(2);
+  e.target.value = v;
+});
+
+/* ================= contact form ================= */
+document.getElementById('contactForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const name = document.getElementById('cName'), email = document.getElementById('cEmail'), msg = document.getElementById('cMsg');
+  let ok = true;
+  setErr(name, !name.value.trim()); ok = ok && !!name.value.trim();
+  setErr(email, !validEmail(email.value.trim())); ok = ok && validEmail(email.value.trim());
+  setErr(msg, !msg.value.trim()); ok = ok && !!msg.value.trim();
+  if (!ok) { toast('please fill in the highlighted fields'); return; }
+  e.target.innerHTML = '<div style="text-align:center;padding:1.5rem 0"><div style="font-size:2rem;margin-bottom:0.5rem">📨</div><h3 style="margin-bottom:0.3rem">message sent</h3><p style="color:var(--muted);font-size:0.9rem">we\'ll get back to you within 24 hours.</p></div>';
+  toast('message sent — thanks!');
+});
+
+/* ================= newsletter ================= */
+document.getElementById('nlForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const input = document.getElementById('nlEmail');
+  if (!validEmail(input.value.trim())) { toast('please enter a valid email'); return; }
+  e.target.style.display = 'none';
+  document.getElementById('nlOk').style.display = 'block';
+  toast('subscribed!');
+});
+
+/* ================= faq ================= */
+document.querySelectorAll('.faq button').forEach(b => b.addEventListener('click', () => {
+  b.parentElement.classList.toggle('open');
+}));
+
+/* ================= toast ================= */
+let toastTimer;
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+/* ================= init ================= */
+renderDeck();
+showCode(null);
+updateCartUI();
+route();
+</script>
+</body>
+</html>

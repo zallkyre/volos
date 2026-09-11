@@ -1,0 +1,19 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "volos"
+version = "0.1.0"
+description = "python library for the volos hardware deck — magnetic modules, native python, zero drivers"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.9"
+authors = [{ name = "zallkyre" }]
+dependencies = []
+
+[project.optional-dependencies]
+ble = ["bleak>=0.20"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["volos"]
