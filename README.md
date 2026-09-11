@@ -73,6 +73,28 @@ the deck exposes one BLE service (see `volos/protocol.py`):
 
 messages are single-line JSON: `{"m": "display", "c": "write", "d": "hello"}`
 
+## firmware
+
+the ESP32 deck firmware lives in `firmware/` (PlatformIO project).
+it implements the volos BLE service — oled display, button (GPIO 0),
+and the ESP32 internal temperature sensor.
+
+```bash
+cd firmware
+pio run                 # build
+pio run -t upload       # flash over usb
+```
+
+then find the deck's address and connect:
+
+```python
+import volos
+
+v = volos.connect(transport="ble", address="XX:XX:XX:XX:XX:XX")
+v.display.write("hello from python")
+print(v.sensor.temp())
+```
+
 ## examples
 
 ```bash
