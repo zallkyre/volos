@@ -642,3 +642,64 @@ body.compact .sim-section { margin: 2.5rem 0; }
         grid-template-columns: 1fr;
     }
 }
+
+/* Discord Section */
+.discord-section {
+    margin: 5rem 0;
+    text-align: center;
+}
+
+.discord-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 2.5rem 2rem 2rem;
+    backdrop-filter: blur(10px);
+    max-width: 460px;
+    margin: 0 auto;
+}
+
+.discord-logo {
+    height: 40px;
+    width: auto;
+    filter: invert(1);
+    margin-bottom: 1.25rem;
+}
+
+.discord-card h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.5rem;
+}
+
+.discord-card .subtitle {
+    font-size: 0.95rem;
+    margin: 0 auto 1.5rem;
+    max-width: 320px;
+}
+
+.discord-widget-frame {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(88, 101, 242, 0.35);
+    box-shadow: 0 0 40px rgba(88, 101, 242, 0.18);
+    height: 410px;
+    max-width: 350px;
+    margin: 0 auto;
+    background: #000;
+}
+
+.discord-widget-frame iframe {
+    width: 350px;
+    height: 500px;
+    border: 0;
+    transform: scale(0.82);
+    transform-origin: top center;
+}
+
+.discord-join {
+    margin-top: 1.5rem;
+    display: inline-block;
+    text-decoration: none;
+}
