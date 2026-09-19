@@ -159,10 +159,17 @@ messages are single-line JSON:
 - [x] esp32 prototype firmware (ble: display, button, temp sensor)
 - [x] python library 0.1.0 with simulator
 - [x] interactive site with live simulator
+- [x] pcb designed
 - [ ] esp32-s3 stream deck grid (3×3 / 4×3, kailh hot-swap)
 - [ ] web serial flashing from the browser
 - [ ] snap-on modules: rotary encoder, key cluster, fader
 - [ ] curated directory of trusted github tools
+
+## current holdbacks
+
+<h1 align="center">I NEED FUNDS</h1>
+
+the PCB is designed and ready to order. what's missing is the money for the first production run — boards, parts, and assembly.
 
 ## community
 
