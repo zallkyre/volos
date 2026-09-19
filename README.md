@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="volos.png" alt="volos" width="120">
+<img src="volos-logo.png" alt="volos" width="120">
 
 # volos
 
