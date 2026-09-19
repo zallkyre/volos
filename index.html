@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>volos — hardware platform</title>
+    <title>volos — open-source stream deck</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -26,25 +26,25 @@
         <!-- Home View -->
         <div id="tab-home" class="tab-content active">
             <section class="hero">
-                <h1>tangible code. instant execution.</h1>
-                <p class="subtitle">plug physical volos modules directly into your deck. write python instantly without drivers or software setup.</p>
+                <h1>open-source stream deck.</h1>
+                <p class="subtitle">a $25 macropad that beats a $150 elgato. hot-swap keys, snap-on modules, zero-install flashing.</p>
             </section>
 
             <section class="grid">
                 <div class="card">
                     <span class="card-tag">01</span>
-                    <h3>magnetic bus</h3>
-                    <p>snap physical hardware modules into the main volos base unit with zero wiring.</p>
+                    <h3>hot-swap keys</h3>
+                    <p>kailh mechanical sockets. swap switches and keycaps without soldering — your deck, your feel.</p>
                 </div>
                 <div class="card">
                     <span class="card-tag">02</span>
-                    <h3>native python</h3>
-                    <p>modules register as native objects in your code the second they snap in.</p>
+                    <h3>snap-on modules</h3>
+                    <p>rotary encoders, key clusters, faders. magnetic pogo-pin + usb-c expansion, zero wiring.</p>
                 </div>
                 <div class="card">
                     <span class="card-tag">03</span>
-                    <h3>zero delay</h3>
-                    <p>hardware execution runs locally at the chip level for real-time feedback.</p>
+                    <h3>zero-install flashing</h3>
+                    <p>flash firmware from the browser over web serial. no drivers, no ide, no setup.</p>
                 </div>
             </section>
 
@@ -60,12 +60,62 @@
                         <span class="dot red"></span>
                         <span class="dot yellow"></span>
                         <span class="dot green"></span>
-                        <span class="preview-title">main.py</span>
+                        <span class="preview-title">deck.py</span>
                     </div>
                     <pre class="code-preview"><code><span class="kwd">import</span> volos
 
-v = volos.connect()
-v.read()</code></pre>
+deck = volos.connect()
+
+deck.key(0).on_press(<span class="kwd">lambda</span>: obs.scene(<span class="str">"live"</span>))
+deck.key(1).on_press(<span class="kwd">lambda</span>: obs.mute(<span class="str">"mic"</span>))</code></pre>
+                </div>
+            </section>
+
+            <!-- Compare Section -->
+            <section class="compare-section">
+                <h2>volos vs elgato</h2>
+                <div class="compare-table-wrap macos-window">
+                    <table class="compare-table">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th class="col-volos">volos</th>
+                                <th>elgato stream deck</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>price</td>
+                                <td class="col-volos">$25–40</td>
+                                <td>$150+</td>
+                            </tr>
+                            <tr>
+                                <td>keys</td>
+                                <td class="col-volos">9–12, hot-swap kailh</td>
+                                <td>fixed membrane</td>
+                            </tr>
+                            <tr>
+                                <td>expansion</td>
+                                <td class="col-volos">snap-on modules</td>
+                                <td>none</td>
+                            </tr>
+                            <tr>
+                                <td>software</td>
+                                <td class="col-volos">open source</td>
+                                <td>proprietary</td>
+                            </tr>
+                            <tr>
+                                <td>flashing</td>
+                                <td class="col-volos">web serial, no install</td>
+                                <td>vendor app</td>
+                            </tr>
+                            <tr>
+                                <td>lock-in</td>
+                                <td class="col-volos">none — mit license</td>
+                                <td>account + cloud</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </section>
 
@@ -74,44 +124,52 @@ v.read()</code></pre>
                 <h2>frequently asked questions</h2>
                 <div class="faq-grid">
                     <div class="faq-item">
-                        <h4>what comes in the box?</h4>
-                        <p>every order includes the main volos base deck, magnetic link cable, and your selected physical modules.</p>
+                        <h4>what's in the box?</h4>
+                        <p>the base deck with 9 or 12 hot-swap sockets, keycaps, and a usb-c cable. modules snap on separately.</p>
                     </div>
                     <div class="faq-item">
-                        <h4>do i need to install drivers?</h4>
-                        <p>no. volos uses native USB-C HID protocols. plug it in and python reads it immediately.</p>
+                        <h4>do i need drivers?</h4>
+                        <p>no. volos speaks hid out of the box and flashes over web serial — open the site, plug in, click flash.</p>
                     </div>
                     <div class="faq-item">
-                        <h4>is there a monthly subscription?</h4>
-                        <p>never. you own the physical hardware outright with a one-time purchase.</p>
+                        <h4>can i use my own switches?</h4>
+                        <p>any kailh / cherry-mx compatible switch. linear, tactile, clicky — mix them however you like.</p>
+                    </div>
+                    <div class="faq-item">
+                        <h4>is it really open source?</h4>
+                        <p>yes. firmware, python library, and hardware files are mit on github. no account, no cloud, no lock-in.</p>
+                    </div>
+                    <div class="faq-item">
+                        <h4>how much does it cost?</h4>
+                        <p>the bom is $12–18. the base deck sells for $25–40. an elgato stream deck starts at $150.</p>
                     </div>
                 </div>
             </section>
-        <!-- Discord Section -->
+
+            <!-- Discord Section -->
             <section class="discord-section">
                 <div class="discord-card">
                     <img src="volos.png" alt="volos logo" class="discord-logo">
                     <h2>join the volos discord</h2>
                     <p class="subtitle">build with us — share macros, modules, and ideas.</p>
-                    <div class="discord-widget-frame">
-                        <iframe src="https://discord.com/widget?id=1548444097033928786&theme=dark" width="350" height="500" allowtransparency="true" frameborder="0" sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"></iframe>
-                    </div>
                     <a class="btn btn-accent btn-pulse discord-join" href="https://discord.com/invite/juFWb2M4" target="_blank" rel="noopener">join the server</a>
                 </div>
             </section>
         </div>
+
+        <!-- Examples View -->
         <div id="tab-examples" class="tab-content">
             <section class="hero">
-                <h1>code examples</h1>
-                <p class="subtitle">minimal, uncustomized python code to run hardware modules.</p>
+                <h1>what will you build?</h1>
+                <p class="subtitle">scene switcher, volume knob, key cluster, audio fader — all in a few lines of python.</p>
             </section>
 
             <div class="examples-layout">
                 <div class="example-selector">
-                    <button class="ex-btn active" onclick="loadExample('base', event)">base deck</button>
-                    <button class="ex-btn" onclick="loadExample('display', event)">oled display</button>
-                    <button class="ex-btn" onclick="loadExample('button', event)">keypad module</button>
-                    <button class="ex-btn" onclick="loadExample('sensor', event)">temp sensor</button>
+                    <button class="ex-btn active" onclick="loadExample('obs', event)">obs switcher</button>
+                    <button class="ex-btn" onclick="loadExample('knob', event)">volume knob</button>
+                    <button class="ex-btn" onclick="loadExample('cluster', event)">key cluster</button>
+                    <button class="ex-btn" onclick="loadExample('fader', event)">audio fader</button>
                 </div>
 
                 <div class="preview-box macos-window">
@@ -119,13 +177,10 @@ v.read()</code></pre>
                         <span class="dot red"></span>
                         <span class="dot yellow"></span>
                         <span class="dot green"></span>
-                        <span class="preview-title" id="exampleFileName">base.py</span>
-                        <button class="btn btn-run" id="runBtn" data-example="base" onclick="runExample()">run</button>
+                        <span class="preview-title" id="exampleFileName">obs.py</span>
+                        <button class="btn btn-run" id="runBtn" data-example="obs" onclick="runExample()">run</button>
                     </div>
-                    <pre class="code-preview"><code id="exampleCodeContainer"><span class="kwd">import</span> volos
-
-v = volos.connect()
-v.read()</code></pre>
+                    <pre class="code-preview"><code id="exampleCodeContainer"></code></pre>
                 </div>
             </div>
 
@@ -137,11 +192,8 @@ v.read()</code></pre>
                 <div class="sim-layout">
                     <div class="sim-deck macos-window">
                         <div class="sim-deck-label">volos deck</div>
-                        <div class="sim-oled" id="simDisplay"></div>
-                        <div class="sim-row">
-                            <button class="sim-btn" id="simBtn" onclick="simPressButton()">button</button>
-                            <div class="sim-temp" id="simTemp">24.6°C</div>
-                        </div>
+                        <div class="sim-grid" id="simGrid"></div>
+                        <div class="sim-module" id="simModule"></div>
                     </div>
                     <div class="sim-console macos-window" id="simConsole"></div>
                 </div>
@@ -151,26 +203,26 @@ v.read()</code></pre>
         <!-- Shop View -->
         <div id="tab-shop" class="tab-content">
             <section class="hero">
-                <h1>hardware bundles</h1>
-                <p class="subtitle">physical base decks and magnetic expansion modules shipped to your door.</p>
+                <h1>pick your deck</h1>
+                <p class="subtitle">open-source hardware, shipped to your door. modules snap on whenever you want more.</p>
             </section>
 
             <section class="grid shop-grid">
                 <div class="card shop-card">
                     <div>
-                        <span class="card-tag">starter kit</span>
-                        <h3>base + 3 modules</h3>
-                        <p>physical volos main base deck plus 3 physical snap-in modules of your choice.</p>
+                        <span class="card-tag">essentials</span>
+                        <h3>volos 3×3</h3>
+                        <p>9 hot-swap keys. the perfect macropad for shortcuts, scenes, and macros.</p>
                         <ul class="feature-list">
-                            <li>1x physical base deck</li>
-                            <li>3x physical hardware modules</li>
-                            <li>braided USB-C cable</li>
-                            <li>free worldwide shipping</li>
+                            <li>9x kailh hot-swap sockets</li>
+                            <li>esp32-s3 hub</li>
+                            <li>usb-c, web serial flashing</li>
+                            <li>open-source firmware</li>
                         </ul>
                     </div>
                     <div class="price-row">
-                        <span class="price">$20</span>
-                        <button class="btn" onclick="orderKit('base + 3 modules')">order kit</button>
+                        <span class="price">$25</span>
+                        <button class="btn" onclick="orderKit('volos 3×3')">order deck</button>
                     </div>
                 </div>
 
@@ -180,41 +232,41 @@ v.read()</code></pre>
                             <span class="card-tag accent-tag">most popular</span>
                             <span class="savings-tag">best value</span>
                         </div>
-                        <h3>base + 5 modules</h3>
-                        <p>our most complete setup. main base deck plus 5 physical expansion modules.</p>
+                        <h3>volos 4×3</h3>
+                        <p>12 hot-swap keys plus pogo-pin module slots. the full stream deck experience.</p>
                         <ul class="feature-list">
-                            <li>1x physical base deck</li>
-                            <li>5x physical hardware modules</li>
-                            <li>braided USB-C cable</li>
-                            <li>aluminum storage case</li>
-                            <li>free worldwide shipping</li>
+                            <li>12x kailh hot-swap sockets</li>
+                            <li>2x magnetic module slots</li>
+                            <li>esp32-s3 hub, usb-c</li>
+                            <li>web serial flashing</li>
+                            <li>open-source firmware</li>
                         </ul>
                     </div>
                     <div class="price-row">
                         <div class="price-stack">
-                            <span class="price">$30</span>
+                            <span class="price">$35</span>
                             <span class="strike">$40</span>
                         </div>
-                        <button class="btn btn-accent btn-pulse" onclick="orderKit('base + 5 modules')">order kit</button>
+                        <button class="btn btn-accent btn-pulse" onclick="orderKit('volos 4×3')">order deck</button>
                     </div>
                 </div>
 
                 <div class="card shop-card">
                     <div>
-                        <span class="card-tag">collector tier</span>
-                        <h3>base + all modules</h3>
-                        <p>the complete physical ecosystem with all expansion modules included.</p>
+                        <span class="card-tag">pro kit</span>
+                        <h3>volos 4×3 + modules</h3>
+                        <p>the complete setup — deck plus every snap-on module for any workflow.</p>
                         <ul class="feature-list">
-                            <li>1x physical base deck</li>
-                            <li>all physical hardware modules</li>
-                            <li>braided USB-C cable</li>
+                            <li>4×3 deck (12 hot-swap keys)</li>
+                            <li>rotary encoder module</li>
+                            <li>key cluster module</li>
+                            <li>fader module</li>
                             <li>aluminum storage case</li>
-                            <li>priority support pass</li>
                         </ul>
                     </div>
                     <div class="price-row">
-                        <span class="price">$45</span>
-                        <button class="btn" onclick="orderKit('base + all modules')">order kit</button>
+                        <span class="price">$55</span>
+                        <button class="btn" onclick="orderKit('volos 4×3 + modules')">order kit</button>
                     </div>
                 </div>
             </section>
@@ -224,14 +276,25 @@ v.read()</code></pre>
         <div id="tab-settings" class="tab-content">
             <section class="hero">
                 <h1>settings</h1>
-                <p class="subtitle">configure hardware interface defaults and local runtime behavior.</p>
+                <p class="subtitle">configure your deck and local runtime behavior.</p>
             </section>
 
             <div class="settings-box macos-card">
                 <div class="setting-item">
                     <div>
+                        <h4>key grid</h4>
+                        <p>simulator grid size — matches the deck you own</p>
+                    </div>
+                    <select class="setting-select" id="setGrid">
+                        <option value="3x3" selected>3×3 (9 keys)</option>
+                        <option value="4x3">4×3 (12 keys)</option>
+                    </select>
+                </div>
+
+                <div class="setting-item">
+                    <div>
                         <h4>high-contrast mode</h4>
-                        <p>enhance UI visibility for dark environments</p>
+                        <p>enhance ui visibility for dark environments</p>
                     </div>
                     <label class="switch">
                         <input type="checkbox" id="setContrast" checked>
@@ -241,19 +304,8 @@ v.read()</code></pre>
 
                 <div class="setting-item">
                     <div>
-                        <h4>auto-detect hardware</h4>
-                        <p>hot-swap physical modules without restarting script</p>
-                    </div>
-                    <label class="switch">
-                        <input type="checkbox" checked>
-                        <span class="slider"></span>
-                    </label>
-                </div>
-
-                <div class="setting-item">
-                    <div>
                         <h4>hardware haptics</h4>
-                        <p>trigger subtle click feedback on module snap</p>
+                        <p>trigger subtle click feedback on key press</p>
                     </div>
                     <label class="switch">
                         <input type="checkbox" id="setHaptics" checked>
@@ -266,7 +318,7 @@ v.read()</code></pre>
                         <h4>compact layout</h4>
                         <p>reduce interface spacing for smaller displays</p>
                     </div>
-<label class="switch">
+                    <label class="switch">
                         <input type="checkbox" id="setCompact">
                         <span class="slider"></span>
                     </label>

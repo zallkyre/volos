@@ -7,6 +7,8 @@
     --text: #f5f5f7;
     --text-muted: #86868b;
     --accent: #ffffff;
+    --volos-purple: #7c6cff;
+    --volos-cyan: #4cc9f0;
 }
 
 * {
@@ -225,6 +227,7 @@ body {
     font-size: 0.9rem;
     color: #e5e5e7;
     line-height: 1.6;
+    overflow-x: auto;
 }
 
 .kwd { color: #fc5d7c; }
@@ -266,6 +269,64 @@ body {
     color: var(--text);
     border-color: rgba(255, 255, 255, 0.3);
     background: rgba(255, 255, 255, 0.1);
+}
+
+/* Compare Section */
+.compare-section {
+    margin: 5rem 0;
+}
+
+.compare-section h2 {
+    font-size: 1.75rem;
+    font-weight: 600;
+    margin-bottom: 2rem;
+    letter-spacing: -0.02em;
+}
+
+.compare-table-wrap {
+    padding: 0;
+    overflow: hidden;
+}
+
+.compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+}
+
+.compare-table th,
+.compare-table td {
+    text-align: left;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.compare-table thead th {
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.compare-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.compare-table td:first-child {
+    color: var(--text-muted);
+    width: 30%;
+}
+
+.compare-table .col-volos {
+    color: var(--text);
+    font-weight: 600;
+    background: rgba(124, 108, 255, 0.06);
+}
+
+.compare-table thead .col-volos {
+    color: var(--volos-purple);
 }
 
 /* FAQ Section */
@@ -444,6 +505,26 @@ body {
     color: var(--text-muted);
 }
 
+.setting-select {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    outline: none;
+}
+
+.setting-select:hover {
+    border-color: var(--border-accent);
+}
+
+.setting-select option {
+    background: #1c1c1e;
+    color: var(--text);
+}
+
 /* Toggle Switches */
 .switch {
     position: relative;
@@ -507,7 +588,7 @@ input:checked + .slider:before {
 
 .sim-layout {
     display: grid;
-    grid-template-columns: 260px 1fr;
+    grid-template-columns: 300px 1fr;
     gap: 1.5rem;
     align-items: stretch;
 }
@@ -525,55 +606,165 @@ input:checked + .slider:before {
     letter-spacing: 0.05em;
 }
 
-.sim-oled {
-    background: #0a1f0a;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 8px;
-    min-height: 72px;
-    padding: 0.75rem;
-    font-family: SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    font-size: 1rem;
-    color: #7CFC00;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    text-shadow: 0 0 8px rgba(124, 252, 0, 0.5);
-    word-break: break-word;
+/* Key grid */
+.sim-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.6rem;
 }
 
-.sim-row {
+.sim-grid.grid-4x3 {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+.sim-key {
+    aspect-ratio: 1;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.04));
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 10px;
+    color: var(--text);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.12s ease;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.sim-key:hover {
+    border-color: rgba(255, 255, 255, 0.35);
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.07));
+}
+
+.sim-key:active {
+    transform: translateY(1px) scale(0.97);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.sim-key-flash {
+    border-color: var(--volos-purple) !important;
+    box-shadow: 0 0 14px rgba(124, 108, 255, 0.6) !important;
+}
+
+/* Snap-on module area */
+.sim-module {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
     align-items: center;
     gap: 0.75rem;
+    padding: 1rem;
+    border: 1px dashed rgba(255, 255, 255, 0.18);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.02);
+    min-height: 150px;
+    justify-content: center;
 }
 
-.sim-btn {
+.sim-module-empty {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-family: SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.sim-module-label {
+    font-family: SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.sim-module-btn {
     background: rgba(255, 255, 255, 0.1);
     border: 1px solid var(--border);
     color: var(--text);
-    padding: 0.5rem 1.25rem;
+    padding: 0.4rem 1.1rem;
     border-radius: 8px;
     font-size: 0.8rem;
     cursor: pointer;
     transition: all 0.15s ease;
 }
 
-.sim-btn:active {
-    transform: scale(0.94);
-    background: rgba(255, 255, 255, 0.25);
+.sim-module-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
 }
 
-.sim-btn-pulse {
-    animation: softPulse 1.2s infinite;
-    border-color: #30d158;
+.sim-module-btn:active {
+    transform: scale(0.95);
 }
 
-.sim-temp {
-    font-family: SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    font-size: 0.85rem;
-    color: var(--text-muted);
+/* Key cluster module */
+.sim-cluster {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+}
+
+.sim-cluster-key {
+    width: 64px;
+    font-size: 0.8rem;
+}
+
+/* Rotary knob */
+.sim-knob {
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.05) 60%, rgba(0, 0, 0, 0.4));
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    position: relative;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.sim-knob-marker {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    width: 3px;
+    height: 22px;
+    margin-left: -1.5px;
+    border-radius: 2px;
+    background: var(--volos-cyan);
+    transform-origin: 50% 34px;
+    transition: transform 0.15s ease;
+    box-shadow: 0 0 8px rgba(76, 201, 240, 0.7);
+}
+
+/* Fader */
+.sim-fader {
+    display: flex;
+    justify-content: center;
+    padding: 0.25rem 0;
+}
+
+.sim-fader-input {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 110px;
+    background: linear-gradient(to top, rgba(124, 108, 255, 0.5), rgba(76, 201, 240, 0.5));
+    border-radius: 6px;
+    outline: none;
+    cursor: pointer;
+}
+
+.sim-fader-input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 26px;
+    height: 14px;
+    border-radius: 4px;
+    background: #f5f5f7;
+    border: 1px solid rgba(0, 0, 0, 0.4);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+    cursor: grab;
+}
+
+.sim-fader-input::-moz-range-thumb {
+    width: 26px;
+    height: 14px;
+    border-radius: 4px;
+    background: #f5f5f7;
+    border: 1px solid rgba(0, 0, 0, 0.4);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+    cursor: grab;
 }
 
 .sim-console {
@@ -582,8 +773,8 @@ input:checked + .slider:before {
     line-height: 1.7;
     color: #e5e5e7;
     overflow-y: auto;
-    max-height: 260px;
-    min-height: 160px;
+    max-height: 320px;
+    min-height: 200px;
 }
 
 .sim-line {
@@ -635,10 +826,14 @@ body.compact .hero h1 { font-size: 2.4rem; }
 body.compact .card { padding: 1.25rem 1.25rem; }
 body.compact .preview-section { margin: 2.5rem 0; }
 body.compact .faq-section { margin: 2.5rem 0; }
+body.compact .compare-section { margin: 2.5rem 0; }
 body.compact .sim-section { margin: 2.5rem 0; }
 
 @media (max-width: 720px) {
     .sim-layout {
+        grid-template-columns: 1fr;
+    }
+    .examples-layout {
         grid-template-columns: 1fr;
     }
 }
@@ -677,25 +872,6 @@ body.compact .sim-section { margin: 2.5rem 0; }
     font-size: 0.95rem;
     margin: 0 auto 1.5rem;
     max-width: 320px;
-}
-
-.discord-widget-frame {
-    border-radius: 12px;
-    overflow: hidden;
-    border: 1px solid rgba(88, 101, 242, 0.35);
-    box-shadow: 0 0 40px rgba(88, 101, 242, 0.18);
-    height: 410px;
-    max-width: 350px;
-    margin: 0 auto;
-    background: #000;
-}
-
-.discord-widget-frame iframe {
-    width: 350px;
-    height: 500px;
-    border: 0;
-    transform: scale(0.82);
-    transform-origin: top center;
 }
 
 .discord-join {

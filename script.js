@@ -1,48 +1,75 @@
 const examples = {
-    base: {
-        file: "base.py",
-        code: `<span class="kwd">import</span> volos\n\nv = volos.connect()\nv.read()`,
+    obs: {
+        file: "obs.py",
+        code: `<span class="kwd">import</span> volos
+
+deck = volos.connect()
+
+deck.key(0).on_press(<span class="kwd">lambda</span>: obs.scene(<span class="str">"live"</span>))
+deck.key(1).on_press(<span class="kwd">lambda</span>: obs.scene(<span class="str">"brb"</span>))
+deck.key(2).on_press(<span class="kwd">lambda</span>: obs.mute(<span class="str">"mic"</span>))`,
+        module: 'none',
         run: function (deck) {
             deck.log('volos 0.1.0 — sim transport connected');
-            deck.log('deck: base (no modules)');
-            deck.log('> v.read()');
-            deck.log('volos deck ready');
+            deck.log('deck: 3×3 hot-swap grid');
+            deck.log('> deck.key(0).on_press(...)');
+            deck.log('> deck.key(1).on_press(...)');
+            deck.log('> deck.key(2).on_press(...)');
+            deck.log('ready — press a key on the deck');
         }
     },
-    display: {
-        file: "display.py",
-        code: `<span class="kwd">import</span> volos\n\nv = volos.connect()\nv.display.write(<span class="str">"hello"</span>)`,
+    knob: {
+        file: "knob.py",
+        code: `<span class="kwd">import</span> volos
+
+deck = volos.connect()
+knob = deck.snap(volos.RotaryEncoder())
+
+<span class="kwd">@knob.on_turn</span>
+<span class="kwd">def</span> volume(delta):
+    mixer.volume += delta * 0.05`,
+        module: 'knob',
         run: function (deck) {
             deck.log('volos 0.1.0 — sim transport connected');
-            deck.log('module detected: oled display');
-            deck.log('> v.display.write("hello")');
-            deck.setDisplay('hello');
-            deck.log('display: hello');
+            deck.log('module detected: rotary encoder');
+            deck.log('> @knob.on_turn');
+            deck.log('ready — turn the knob');
         }
     },
-    button: {
-        file: "button.py",
-        code: `<span class="kwd">import</span> volos\n\nv = volos.connect()\n<span class="kwd">if</span> v.button.pressed():\n    <span class="kwd">print</span>(<span class="str">"click"</span>)`,
+    cluster: {
+        file: "cluster.py",
+        code: `<span class="kwd">import</span> volos
+
+deck = volos.connect()
+cluster = deck.snap(volos.KeyCluster())
+
+<span class="kwd">@cluster.key(0)</span>
+<span class="kwd">def</span> on_press():
+    launch(<span class="str">"discord"</span>)`,
+        module: 'cluster',
         run: function (deck) {
             deck.log('volos 0.1.0 — sim transport connected');
-            deck.log('module detected: keypad module');
-            deck.log('> if v.button.pressed():');
-            deck.log('waiting for button press… (click the deck button)');
-            deck.waitForButton(function () {
-                deck.log('> print("click")');
-                deck.log('click');
-            });
+            deck.log('module detected: key cluster');
+            deck.log('> @cluster.key(0)');
+            deck.log('ready — press a cluster key');
         }
     },
-    sensor: {
-        file: "sensor.py",
-        code: `<span class="kwd">import</span> volos\n\nv = volos.connect()\n<span class="kwd">print</span>(v.sensor.temp())`,
+    fader: {
+        file: "fader.py",
+        code: `<span class="kwd">import</span> volos
+
+deck = volos.connect()
+fader = deck.snap(volos.Fader())
+
+<span class="kwd">@fader.on_move</span>
+<span class="kwd">def</span> level(value):
+    mixer.channel(<span class="str">"music"</span>).level = value`,
+        module: 'fader',
         run: function (deck) {
             deck.log('volos 0.1.0 — sim transport connected');
-            deck.log('module detected: temp sensor');
-            deck.log('> print(v.sensor.temp())');
-            const t = deck.readTemp();
-            deck.log(t.toFixed(1) + '°C');
+            deck.log('module detected: fader');
+            deck.log('> @fader.on_move');
+            deck.log('ready — drag the fader');
         }
     }
 };
@@ -55,8 +82,7 @@ function showTab(tabName, event) {
     buttons.forEach(btn => btn.classList.remove('active'));
 
     document.getElementById(`tab-${tabName}`).classList.add('active');
-    
-    // highlight corresponding nav button
+
     buttons.forEach(btn => {
         if (btn.getAttribute('onclick').includes(`'${tabName}'`)) {
             btn.classList.add('active');
@@ -67,7 +93,7 @@ function showTab(tabName, event) {
 function loadExample(key, event) {
     const selectorBtns = document.querySelectorAll('.ex-btn');
     selectorBtns.forEach(btn => btn.classList.remove('active'));
-    
+
     if (event && event.currentTarget) {
         event.currentTarget.classList.add('active');
     }
@@ -82,23 +108,146 @@ function loadExample(key, event) {
 /* ---------- live simulator ---------- */
 
 const sim = {
-    displayText: '',
-    temp: 24.6,
-    waitingForButton: null,
-    running: false
+    gridSize: '3x3',
+    running: false,
+    waitingForKey: null,
+    knobValue: 40,
+    faderValue: 50
 };
 
+function buildGrid() {
+    const grid = document.getElementById('simGrid');
+    grid.innerHTML = '';
+    const cols = sim.gridSize === '4x3' ? 4 : 3;
+    const rows = 3;
+    grid.className = 'sim-grid' + (cols === 4 ? ' grid-4x3' : '');
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+            const i = r * cols + c;
+            const btn = document.createElement('button');
+            btn.className = 'sim-key';
+            btn.dataset.index = i;
+            btn.textContent = String(i + 1);
+            btn.addEventListener('click', () => simPressKey(i, btn));
+            grid.appendChild(btn);
+        }
+    }
+}
+
+function buildModule(kind) {
+    const el = document.getElementById('simModule');
+    el.innerHTML = '';
+    if (kind === 'knob') {
+        el.className = 'sim-module';
+        const knob = document.createElement('div');
+        knob.className = 'sim-knob';
+        const marker = document.createElement('div');
+        marker.className = 'sim-knob-marker';
+        knob.appendChild(marker);
+        const label = document.createElement('div');
+        label.className = 'sim-module-label';
+        label.id = 'simKnobValue';
+        label.textContent = 'volume ' + sim.knobValue + '%';
+        const btn = document.createElement('button');
+        btn.className = 'sim-module-btn';
+        btn.textContent = 'turn';
+        btn.addEventListener('click', () => simTurnKnob());
+        el.appendChild(knob);
+        el.appendChild(label);
+        el.appendChild(btn);
+        updateKnob();
+    } else if (kind === 'cluster') {
+        el.className = 'sim-module';
+        const grid = document.createElement('div');
+        grid.className = 'sim-cluster';
+        for (let i = 0; i < 4; i++) {
+            const k = document.createElement('button');
+            k.className = 'sim-key sim-cluster-key';
+            k.textContent = 'c' + (i + 1);
+            k.addEventListener('click', () => {
+                deck.log('cluster key c' + (i + 1) + ' pressed');
+                k.classList.add('sim-key-flash');
+                setTimeout(() => k.classList.remove('sim-key-flash'), 160);
+            });
+            grid.appendChild(k);
+        }
+        el.appendChild(grid);
+    } else if (kind === 'fader') {
+        el.className = 'sim-module';
+        const fader = document.createElement('div');
+        fader.className = 'sim-fader';
+        const input = document.createElement('input');
+        input.type = 'range';
+        input.min = 0;
+        input.max = 100;
+        input.value = sim.faderValue;
+        input.className = 'sim-fader-input';
+        input.addEventListener('input', () => simMoveFader(input));
+        const label = document.createElement('div');
+        label.className = 'sim-module-label';
+        label.id = 'simFaderValue';
+        label.textContent = 'music ' + sim.faderValue + '%';
+        fader.appendChild(input);
+        el.appendChild(fader);
+        el.appendChild(label);
+    } else {
+        el.className = 'sim-module sim-module-empty';
+        el.textContent = 'no module snapped in';
+    }
+}
+
+function updateKnob() {
+    const marker = document.querySelector('.sim-knob-marker');
+    if (marker) {
+        marker.style.transform = `rotate(${sim.knobValue * 3.6}deg)`;
+    }
+    const label = document.getElementById('simKnobValue');
+    if (label) label.textContent = 'volume ' + sim.knobValue + '%';
+}
+
+function simTurnKnob() {
+    sim.knobValue = Math.max(0, Math.min(100, sim.knobValue + 5));
+    updateKnob();
+    deck.log('knob turned → volume ' + sim.knobValue + '%');
+}
+
+function simMoveFader(input) {
+    sim.faderValue = parseInt(input.value, 10);
+    const label = document.getElementById('simFaderValue');
+    if (label) label.textContent = 'music ' + sim.faderValue + '%';
+    deck.log('fader moved → music ' + sim.faderValue + '%');
+}
+
+function simPressKey(i, btn) {
+    if (sim.waitingForKey) {
+        const cb = sim.waitingForKey;
+        sim.waitingForKey = null;
+        cb(i);
+        return;
+    }
+    const key = document.getElementById('runBtn').dataset.example;
+    if (key === 'obs') {
+        const scenes = ['live', 'brb', 'mic mute', 'camera', 'game', 'chat', 'starting soon', 'thanks', 'break'];
+        const name = scenes[i] || ('key ' + (i + 1));
+        deck.log('key ' + (i + 1) + ' pressed → scene: ' + name);
+    } else {
+        deck.log('key ' + (i + 1) + ' pressed');
+    }
+    btn.classList.add('sim-key-flash');
+    setTimeout(() => btn.classList.remove('sim-key-flash'), 160);
+}
+
 function resetSim() {
-    sim.displayText = '';
-    sim.waitingForButton = null;
     sim.running = false;
+    sim.waitingForKey = null;
     document.getElementById('simConsole').innerHTML = '';
-    document.getElementById('simDisplay').innerText = '';
-    document.getElementById('simTemp').innerText = sim.temp.toFixed(1) + '°C';
     document.getElementById('simStatus').innerText = 'idle';
     document.getElementById('simStatus').className = 'sim-status';
     document.getElementById('runBtn').disabled = false;
     document.getElementById('runBtn').innerText = 'run';
+    buildGrid();
+    const key = document.getElementById('runBtn').dataset.example;
+    buildModule(examples[key] ? examples[key].module : 'none');
 }
 
 const deck = {
@@ -109,18 +258,10 @@ const deck = {
         document.getElementById('simConsole').appendChild(el);
         document.getElementById('simConsole').scrollTop = document.getElementById('simConsole').scrollHeight;
     },
-    setDisplay: function (text) {
-        sim.displayText = text;
-        document.getElementById('simDisplay').innerText = text;
-    },
-    readTemp: function () {
-        return sim.temp;
-    },
-    waitForButton: function (cb) {
-        sim.waitingForButton = cb;
-        document.getElementById('simStatus').innerText = 'waiting for button…';
+    waitForKey: function (cb) {
+        sim.waitingForKey = cb;
+        document.getElementById('simStatus').innerText = 'waiting for key…';
         document.getElementById('simStatus').className = 'sim-status sim-waiting';
-        document.getElementById('simBtn').classList.add('sim-btn-pulse');
     }
 };
 
@@ -134,30 +275,28 @@ function runExample() {
     document.getElementById('simConsole').innerHTML = '';
     document.getElementById('simStatus').innerText = 'running';
     document.getElementById('simStatus').className = 'sim-status sim-running';
-    setTimeout(() => ex.run(deck), 250);
-}
-
-function simPressButton() {
-    if (sim.waitingForButton) {
-        const cb = sim.waitingForButton;
-        sim.waitingForButton = null;
-        document.getElementById('simBtn').classList.remove('sim-btn-pulse');
-        document.getElementById('simStatus').innerText = 'done';
-        document.getElementById('simStatus').className = 'sim-status sim-done';
+    buildModule(ex.module);
+    setTimeout(() => {
+        ex.run(deck);
         document.getElementById('runBtn').disabled = false;
         document.getElementById('runBtn').innerText = 'run again';
-        cb();
-    }
-}
-
-function simJitterTemp() {
-    sim.temp = 24.6 + (Math.random() * 1.6 - 0.8);
-    document.getElementById('simTemp').innerText = sim.temp.toFixed(1) + '°C';
+        document.getElementById('simStatus').innerText = 'done';
+        document.getElementById('simStatus').className = 'sim-status sim-done';
+    }, 250);
 }
 
 /* ---------- settings that actually work ---------- */
 
 function bindSettings() {
+    document.getElementById('setGrid').addEventListener('change', function (e) {
+        sim.gridSize = e.target.value;
+        buildGrid();
+        const toast = document.getElementById('toast');
+        toast.innerText = 'grid set to ' + (sim.gridSize === '4x3' ? '4×3 (12 keys)' : '3×3 (9 keys)');
+        toast.classList.add('show');
+        clearTimeout(toast._t);
+        toast._t = setTimeout(() => toast.classList.remove('show'), 2000);
+    });
     document.getElementById('setContrast').addEventListener('change', function (e) {
         document.body.classList.toggle('high-contrast', e.target.checked);
     });
@@ -165,8 +304,7 @@ function bindSettings() {
         document.body.classList.toggle('compact', e.target.checked);
     });
     document.getElementById('setHaptics').addEventListener('change', function (e) {
-        const btn = document.getElementById('simBtn');
-        if (btn) btn.dataset.haptics = e.target.checked ? '1' : '0';
+        document.body.dataset.haptics = e.target.checked ? '1' : '0';
     });
 }
 
@@ -183,5 +321,4 @@ function orderKit(name) {
 document.addEventListener('DOMContentLoaded', function () {
     bindSettings();
     resetSim();
-    setInterval(simJitterTemp, 3000);
 });
