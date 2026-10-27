@@ -179,3 +179,7 @@ the PCB is designed and ready to order. what's missing is the money for the firs
 ## license
 
 MIT
+
+---
+
+**LLM guide** — python library for the volos hardware deck - magnetic modules, native python, zero drivers · Stack: CSS · Run: `pip install .` · License: none - ask first
