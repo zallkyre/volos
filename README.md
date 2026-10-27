@@ -182,4 +182,4 @@ MIT
 
 ---
 
-**LLM guide** — python library for the volos hardware deck - magnetic modules, native python, zero drivers · Stack: CSS · Run: `pip install .` · License: none - ask first
+**LLM guide** — python library for the volos hardware deck - magnetic modules, native python, zero drivers · Stack: CSS · Run: `pip install .` · License: MIT-0 - no conditions, resale allowed
